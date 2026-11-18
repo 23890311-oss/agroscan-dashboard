@@ -27,7 +27,7 @@ st.set_page_config(
 NOMBRE = "AgroScan"
 SUBTITULO = "Detector de gusano cogollero y roya del maíz"
 BASE = Path(__file__).parent
-DATA_DIR = BASE / "data"
+DATA_DIR = BASE / "data" if (BASE / "data").is_dir() else BASE
 LOGO = BASE / "logo.png"
 
 UMBRAL = 80
