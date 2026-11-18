@@ -1,0 +1,15 @@
+id_modelo,version_modelo,algoritmo
+0,desconocido,desconocido
+1,desconocido,cnn custom
+2,desconocido,mobilenet
+3,desconocido,tensorflow lite
+4,v1.0,cnn custom
+5,v1.0,desconocido
+6,v1.0,mobilenet
+7,v1.0,tensorflow lite
+8,v1.1,cnn custom
+9,v1.1,mobilenet
+10,v1.1,tensorflow lite
+11,v2.0,cnn custom
+12,v2.0,mobilenet
+13,v2.0,tensorflow lite

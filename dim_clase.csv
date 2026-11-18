@@ -1,0 +1,8 @@
+id_clase,nombre_clase,categoria
+0,desconocido,desconocido
+1,gusano,plaga
+2,otros,otros
+3,roya,enfermedad
+4,sano,sano
+5,tomate_maduro,fruto
+6,tomate_verde,fruto
