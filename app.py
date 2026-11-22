@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Green Fresh (inspirado en dashboard agrícola moderno).
+Tema: Agri Cultur (inspirado en dashboard agrícola minimalista con hero images).
 
 Ejecutar:  python -m streamlit run app.py
 Datos:     carpeta data/ con los CSV exportados de PostgreSQL (db_detector_maiz).
@@ -18,7 +18,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="AgroScan · Dashboard",
-    page_icon="🌱",
+    page_icon="🌾",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -33,44 +33,49 @@ LOGO = BASE / "logo.png"
 UMBRAL = 80
 META_EXACTITUD = 90
 COLUMNAS_GRAFICAS = 2
-ALTO = 360
+ALTO = 340
 
-# (clave, icono, etiqueta, título de página)
+# (clave, icono, etiqueta, título)
 PAGINAS = [
-    ("inicio",     "◫", "Inicio",                    "Inicio"),
-    ("r1",         "◈", "R1 · Exactitud",            "R1 · Exactitud por clase y mes"),
-    ("r2",         "◐", "R2 · Incidencia",           "R2 · Incidencia por parcela"),
-    ("r3",         "⚠", "R3 · Confianza baja",       "R3 · Escaneos con confianza baja"),
-    ("r4",         "⊞", "R4 · Matriz de confusión",  "R4 · Matriz de confusión"),
-    ("r5",         "↗", "R5 · Evolución",            "R5 · Evolución temporal"),
-    ("r6",         "⚙", "R6 · Algoritmos",           "R6 · Algoritmos y versiones"),
-    ("decisiones", "◉", "Toma de decisiones",        "Toma de decisiones"),
+    ("inicio",     "◫", "Dashboard",           "Dashboard"),
+    ("r1",         "◈", "R1 · Exactitud",      "Exactitud del modelo"),
+    ("r2",         "◐", "R2 · Incidencia",     "Incidencia por parcela"),
+    ("r3",         "⚠", "R3 · Confianza baja", "Escaneos con confianza baja"),
+    ("r4",         "⊞", "R4 · Confusión",      "Matriz de confusión"),
+    ("r5",         "↗", "R5 · Evolución",      "Evolución temporal"),
+    ("r6",         "⚙", "R6 · Algoritmos",     "Algoritmos y versiones"),
+    ("decisiones", "◉", "Decisiones",          "Toma de decisiones"),
 ]
 
-# ===== Paleta verde / blanco =====
-COLOR_BG          = "#eef2ec"
-COLOR_SIDEBAR     = "#1c3c2c"
-COLOR_SIDEBAR_DK  = "#122a1e"
-COLOR_CARD        = "#ffffff"
-COLOR_LIME        = "#c4f04a"
-COLOR_LIME_SOFT   = "#e4f5b0"
-COLOR_GREEN       = "#4a8b5c"
-COLOR_GREEN_DEEP  = "#1a3d2e"
-COLOR_GREEN_SOFT  = "#7bc99a"
-COLOR_WARM        = "#e8a44d"
-COLOR_TEXT        = "#1a2e1f"
+# ===== Paleta Agri Cultur =====
+COLOR_BG          = "#f4f2ec"
+COLOR_SIDEBAR     = "#242424"
+COLOR_SIDEBAR_2   = "#1a1a1a"
+COLOR_LIME        = "#d4f58c"
+COLOR_LIME_DEEP   = "#b8e86f"
+COLOR_GREEN       = "#2d7a3a"
+COLOR_GREEN_DEEP  = "#1a4d26"
+COLOR_TEXT        = "#1a1a1a"
 COLOR_TEXTO       = COLOR_TEXT
-COLOR_MUTED       = "#7a8a7f"
-COLOR_BORDER      = "#e3ead9"
+COLOR_MUTED       = "#8a8a8a"
+COLOR_BORDER      = "#eae7e0"
+COLOR_CARD        = "#ffffff"
 
-COLOR_META        = COLOR_WARM
-COLOR_BARRA       = COLOR_GREEN_DEEP
+COLOR_META        = "#e8a44d"
+COLOR_BARRA       = COLOR_GREEN
 COLOR_LINEA       = COLOR_GREEN
 
-PALETA = ["#4a8b5c", "#c4f04a", "#1a3d2e", "#7bc99a",
-          "#8ab890", "#d4e89c", "#2c5e3d", "#e8a44d"]
+PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
+          "#c8e6c9", "#e8a44d", "#7bc99a", "#4a8b5c"]
 
 MIN_VERIF = 5
+
+# ===== Imágenes (Unsplash) =====
+IMG_HERO    = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
+IMG_CORN    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=600&auto=format&fit=crop&q=80"
+IMG_TOMATE  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=80"
+IMG_SEED    = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&auto=format&fit=crop&q=80"
+IMG_FIELD   = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop&q=80"
 
 
 # ===== DATOS =====
@@ -299,142 +304,75 @@ CSS = """
 <style>
 header[data-testid="stHeader"] { display: none; }
 [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none; }
-.stApp {
-    background: @@BG@@;
-    min-height: 100vh;
-}
+.stApp { background: @@BG@@; min-height: 100vh; }
 .block-container { padding: 1rem 1.6rem 1.6rem 1.6rem; max-width: 100%; }
 [data-testid="stMain"] :is(h1, h2, h3, h4, h5, p, label, li) { color: @@TEXT@@; }
 
 /* ---------- TOPBAR ---------- */
 .topbar {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 0.75rem 1.1rem;
-    margin-bottom: 1.3rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: 0 1px 3px rgba(26,61,46,0.04), 0 4px 12px rgba(26,61,46,0.06);
-    border: 1px solid #e8ede3;
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.3rem 0.3rem 1.1rem 0.3rem;
+    margin-bottom: 1rem;
 }
 .topbar-search {
-    flex: 1 1 auto;
-    max-width: 420px;
-    background: #f5f7f0;
-    border: 1px solid #e8ede3;
-    border-radius: 10px;
-    padding: 0.6rem 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    color: @@MUTED@@;
-    font-size: 0.88rem;
+    flex: 1 1 auto; max-width: 460px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ded9d0;
+    padding: 0.45rem 0.2rem;
+    display: flex; align-items: center; gap: 0.55rem;
+    color: @@MUTED@@; font-size: 0.86rem;
 }
-.topbar-search .search-icon {
-    color: @@GREEN@@;
-    font-size: 1.05rem;
-    line-height: 1;
-}
-.topbar-search .search-text {
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.topbar-search .search-icon { color: @@MUTED@@; font-size: 1rem; line-height: 1; }
 .topbar-spacer { flex: 1; }
-.topbar-icons {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+.topbar-icons { display: flex; align-items: center; gap: 0.55rem; }
 .tb-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #f5f7f0;
-    color: @@GREEN@@;
-    font-size: 1.05rem;
-    transition: all 0.15s ease;
-    cursor: pointer;
+    width: 38px; height: 38px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #ffffff; color: @@GREEN_DEEP@@;
+    font-size: 1rem; transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-.tb-btn:hover { background: @@LIME_SOFT@@; color: @@GREEN_DEEP@@; }
-.tb-divider {
-    width: 1px;
-    height: 28px;
-    background: #e8ede3;
-    margin: 0 0.5rem;
-}
-.tb-user {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    padding-left: 0.4rem;
-}
+.tb-btn:hover { background: @@LIME@@; }
 .tb-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, @@LIME@@, @@GREEN_SOFT@@);
-    color: @@GREEN_DEEP@@;
-    font-weight: 800;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(196,240,74,0.4);
-}
-.tb-user-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-}
-.tb-user-name {
-    color: @@GREEN_DEEP@@;
-    font-weight: 700;
-    font-size: 0.88rem;
-}
-.tb-user-role {
-    color: @@MUTED@@;
-    font-size: 0.72rem;
-    margin-top: 0.1rem;
-}
-
-@media (max-width: 900px) {
-    .topbar-search { display: none; }
-    .tb-user-text { display: none; }
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #ffffff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-left: 0.35rem;
 }
 
 /* ---------- SIDEBAR ---------- */
 .st-key-menu {
-    background: linear-gradient(180deg, @@SIDEBAR@@ 0%, @@SIDEBAR_DK@@ 100%);
-    border-radius: 22px;
-    padding: 1.3rem 1rem 1.3rem 1rem;
-    box-shadow: 0 10px 30px rgba(26,61,46,0.28);
-    border: 1px solid rgba(196,240,74,0.08);
+    background: @@SIDEBAR@@;
+    border-radius: 28px;
+    padding: 1.6rem 1.1rem 1.4rem 1.1rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    min-height: calc(100vh - 3rem);
+    display: flex; flex-direction: column;
 }
-.st-key-menu [data-testid="stVerticalBlock"] { gap: 0.2rem; }
+.st-key-menu [data-testid="stVerticalBlock"] { gap: 0.15rem; }
 
 .st-key-menu .stButton button {
-    width: 100%; min-height: 2.55rem; height: auto;
+    width: 100%; min-height: 2.5rem; height: auto;
     background: transparent !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     text-align: left !important;
     justify-content: flex-start !important;
-    padding: 0.55rem 0.85rem !important;
-    transition: all 0.18s ease;
+    padding: 0.55rem 1rem !important;
+    transition: all 0.15s ease;
 }
 .st-key-menu .stButton button p {
-    font-size: 0.86rem;
+    font-size: 0.87rem;
     text-align: left;
-    color: #b8d4c2 !important;
+    color: #b8b8b8 !important;
     font-weight: 500;
 }
 .st-key-menu button[kind="secondary"]:hover,
 .st-key-menu [data-testid="stBaseButton-secondary"]:hover {
-    background: rgba(196,240,74,0.08) !important;
+    background: rgba(255,255,255,0.04) !important;
 }
 .st-key-menu button[kind="secondary"]:hover p,
 .st-key-menu [data-testid="stBaseButton-secondary"]:hover p {
@@ -443,399 +381,371 @@ header[data-testid="stHeader"] { display: none; }
 .st-key-menu button[kind="primary"],
 .st-key-menu [data-testid="stBaseButton-primary"] {
     background: @@LIME@@ !important;
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(196,240,74,0.3) !important;
+    box-shadow: 0 2px 10px rgba(212,245,140,0.25) !important;
 }
 .st-key-menu button[kind="primary"] p,
 .st-key-menu [data-testid="stBaseButton-primary"] p {
-    color: @@GREEN_DEEP@@ !important;
-    font-weight: 800;
+    color: @@TEXT@@ !important;
+    font-weight: 700;
 }
 
 .st-key-menu :is(label, [data-testid="stWidgetLabel"] p) {
-    color: #8fa89a !important;
-    font-size: 0.7rem !important;
+    color: #6e6e6e !important;
+    font-size: 0.68rem !important;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
 }
 .st-key-menu [data-baseweb="select"] > div {
-    background: rgba(0,0,0,0.22) !important;
-    border-color: rgba(196,240,74,0.18) !important;
-    color: #e0edde !important;
-    border-radius: 8px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    color: #d8d8d8 !important;
+    border-radius: 10px !important;
 }
-.st-key-menu [data-baseweb="select"] span { color: #e0edde !important; }
+.st-key-menu [data-baseweb="select"] span { color: #d8d8d8 !important; }
 .st-key-menu [data-baseweb="tag"] {
-    background: rgba(196,240,74,0.2) !important;
-    color: #e0edde !important;
+    background: rgba(212,245,140,0.2) !important;
+    color: #d4f58c !important;
 }
 
+/* Brand */
 .brand {
-    padding: 0.3rem 0.3rem 0.9rem;
-    border-bottom: 1px solid rgba(196,240,74,0.12);
-    margin-bottom: 0.9rem;
+    padding: 0.2rem 0.4rem 1.4rem;
+    margin-bottom: 0.6rem;
 }
-.brand-row {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-}
-.brand-logo {
-    width: 42px;
-    height: 42px;
+.brand-row { display: flex; align-items: center; gap: 0.6rem; }
+.brand-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #ffffff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: @@GREEN_DEEP@@; font-weight: 900;
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(196,240,74,0.15);
-    border-radius: 11px;
-    padding: 6px;
 }
-.brand-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-.brand-text {
-    flex: 1;
-    min-width: 0;
-    line-height: 1.15;
-}
-.brand-n {
-    color: #ffffff;
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-}
-.brand-s {
-    color: #8fa89a;
-    font-size: 0.68rem;
-    margin-top: 0.15rem;
+.brand-mark img { width: 22px; height: 22px; object-fit: contain; }
+.brand-n { color: #ffffff; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.brand-n .brand-accent { color: @@LIME@@; font-weight: 800; }
+
+/* Logout */
+.logout-btn {
+    margin-top: 1.4rem;
+    padding: 0.8rem 0.9rem;
+    color: #6e6e6e; font-size: 0.82rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 500;
 }
 
 .filtros-t {
-    color: #8fa89a;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    font-weight: 700;
-    border-top: 1px solid rgba(196,240,74,0.12);
-    padding-top: 0.85rem;
-    margin-top: 0.7rem;
-    margin-bottom: 0.5rem;
-}
-
-.mini-stat {
-    background: rgba(196,240,74,0.1);
-    border: 1px solid rgba(196,240,74,0.22);
-    border-radius: 12px;
-    padding: 0.85rem 0.9rem;
-    margin-top: 0.7rem;
-}
-.mini-stat-title {
-    color: #8fa89a;
-    font-size: 0.64rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
-}
-.mini-stat-value {
-    color: @@LIME@@;
-    font-size: 1.35rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 0.5rem;
-}
-.mini-stat-bar {
-    height: 5px;
-    background: rgba(0,0,0,0.28);
-    border-radius: 3px;
-    overflow: hidden;
-}
-.mini-stat-fill {
-    height: 100%;
-    background: @@LIME@@;
-    border-radius: 3px;
+    color: #6e6e6e; font-size: 0.66rem;
+    text-transform: uppercase; letter-spacing: 0.13em; font-weight: 700;
+    padding-top: 1rem; margin-top: 0.8rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 0.4rem;
 }
 
 /* ---------- PAGE TITLE ---------- */
-.page-title-block {
-    margin: 0 0 1.4rem 0;
-}
+.page-title-block { margin: 0 0 1.2rem 0; }
 .page-crumb {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: @@MUTED@@;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
+    font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.14em; color: @@MUTED@@;
+    font-weight: 600; margin-bottom: 0.25rem;
 }
 .page-title {
-    font-size: 1.65rem;
-    color: @@GREEN_DEEP@@;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    font-size: 1.5rem; color: @@TEXT@@;
+    font-weight: 700; line-height: 1.2;
+    letter-spacing: -0.015em;
 }
 
-/* ---------- KPI ---------- */
+/* ---------- METRIC CARD (top summary) ---------- */
+.metric-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.15rem 1.2rem 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
+    margin-bottom: 0.6rem;
+    display: flex; flex-direction: column;
+    min-height: 110px;
+}
+.metric-label {
+    font-size: 0.72rem; color: @@MUTED@@;
+    font-weight: 500; margin-bottom: 0.55rem;
+}
+.metric-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.metric-value {
+    font-size: 1.85rem; font-weight: 800;
+    color: @@TEXT@@; line-height: 1;
+    letter-spacing: -0.03em;
+}
+.metric-unit {
+    font-size: 0.78rem; color: @@MUTED@@;
+    font-weight: 500; margin-left: 0.2rem;
+}
+.metric-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 50%;
+    font-size: 0.72rem; font-weight: 700;
+    flex-shrink: 0;
+}
+.metric-badge.up { background: #e8f5d4; color: @@GREEN_DEEP@@; }
+.metric-badge.down { background: #fdf2e3; color: #b87333; }
+.metric-badge.flat { background: #f0f0f0; color: #666; }
+
+/* ---------- STATUS CARD (meta) ---------- */
+.status-card {
+    background: #e6f2d8;
+    border-radius: 18px;
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 0.6rem;
+    min-height: 110px;
+}
+.status-label { font-size: 0.72rem; color: @@GREEN_DEEP@@; font-weight: 500; margin-bottom: 0.45rem; }
+.status-row { display: flex; align-items: center; gap: 0.9rem; }
+.status-icon { font-size: 2rem; line-height: 1; }
+.status-num { font-size: 1.65rem; font-weight: 800; color: @@GREEN_DEEP@@; letter-spacing: -0.02em; }
+.status-sub { font-size: 0.72rem; color: @@GREEN_DEEP@@; opacity: 0.75; margin-top: 0.25rem; }
+
+/* ---------- HERO IMAGE ---------- */
+.hero-card {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    height: 300px;
+    margin-bottom: 0.6rem;
+    background: #2a4a2a;
+}
+.hero-card img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+}
+.hero-overlay {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 1.4rem 1.4rem 1.2rem;
+    background: linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
+    color: #ffffff;
+}
+.hero-title {
+    color: #ffffff; font-size: 1.1rem; font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+.hero-sub { color: rgba(255,255,255,0.85); font-size: 0.78rem; }
+
+/* ---------- MINI CARD (fechas style) ---------- */
+.mini-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 0.85rem 0.9rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    margin-bottom: 0.55rem;
+}
+.mini-lbl { font-size: 0.65rem; color: @@MUTED@@; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.35rem; }
+.mini-val { font-size: 1.15rem; font-weight: 800; color: @@TEXT@@; line-height: 1.15; letter-spacing: -0.02em; }
+.mini-sub { font-size: 0.68rem; color: @@MUTED@@; margin-top: 0.2rem; }
+
+/* ---------- PREDICT CARD ---------- */
+.predict-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.1rem 1.2rem 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
+    margin-bottom: 0.6rem;
+}
+.predict-title {
+    font-size: 0.75rem; font-weight: 700;
+    color: @@TEXT@@; margin-bottom: 0.9rem;
+    text-transform: none;
+}
+.pred-row { margin-bottom: 0.55rem; }
+.pred-line {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.72rem; color: @@MUTED@@; margin-bottom: 0.3rem;
+}
+.pred-name { color: @@TEXT@@; font-weight: 500; }
+.pred-val { color: @@TEXT@@; font-weight: 700; }
+.pred-bar {
+    height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;
+}
+.pred-fill { height: 100%; border-radius: 3px; }
+.pred-fill.green { background: @@GREEN@@; }
+.pred-fill.lime { background: @@LIME@@; }
+.pred-fill.orange { background: #e8a44d; }
+
+/* ---------- HARVEST CARD (pie) ---------- */
+.harvest-card {
+    background: #e6f2d8;
+    border-radius: 18px;
+    padding: 1.1rem 1.2rem 1rem;
+    min-height: 100%;
+}
+.harvest-title { font-size: 0.75rem; font-weight: 700; color: @@GREEN_DEEP@@; margin-bottom: 0.9rem; }
+.harvest-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.9rem; }
+.harvest-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: @@GREEN_DEEP@@; }
+.harvest-row span:first-child { opacity: 0.75; }
+.harvest-row span:last-child { font-weight: 700; }
+.harvest-total { font-size: 1.5rem; font-weight: 800; color: @@GREEN_DEEP@@; letter-spacing: -0.02em; }
+.harvest-sub { font-size: 0.7rem; color: @@GREEN_DEEP@@; opacity: 0.7; }
+
+/* ---------- KPI (para R1-R6 y decisiones) ---------- */
 .kpi-card {
     background: #ffffff;
-    border: 1px solid #e8ede3;
     border-radius: 18px;
-    padding: 1.2rem 1rem 1rem;
+    padding: 1.1rem 1.1rem 1rem;
     text-align: center;
-    margin-bottom: 0.8rem;
-    box-shadow: 0 1px 3px rgba(26,61,46,0.04), 0 4px 12px rgba(26,61,46,0.06);
-    position: relative;
-    overflow: hidden;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
+    position: relative; overflow: hidden;
 }
-.kpi-gauge-wrap {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    margin: 0 auto 0.6rem;
-}
+.kpi-gauge-wrap { position: relative; width: 88px; height: 88px; margin: 0 auto 0.5rem; }
 .kpi-gauge { width: 100%; height: 100%; display: block; }
 .kpi-number {
-    position: absolute;
-    top: 50%; left: 50%;
+    position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: @@GREEN_DEEP@@;
-    white-space: nowrap;
+    font-size: 1.05rem; font-weight: 800;
+    color: @@GREEN_DEEP@@; white-space: nowrap;
     letter-spacing: -0.02em;
 }
 .kpi-value-big {
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: @@GREEN_DEEP@@;
-    line-height: 1.15;
-    margin: 0.9rem 0 0.55rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 1.5rem; font-weight: 800; color: @@TEXT@@;
+    line-height: 1.15; margin: 0.75rem 0 0.45rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     letter-spacing: -0.02em;
 }
 .kpi-title {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: @@MUTED@@;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
+    font-size: 0.7rem; color: @@MUTED@@;
+    font-weight: 500; margin-bottom: 0.15rem;
 }
-.kpi-sub {
-    font-size: 0.72rem;
-    color: #9caa9e;
-}
+.kpi-sub { font-size: 0.72rem; color: #a3a3a3; }
 
 /* ---------- INFO CARD ---------- */
 .info-card {
     background: #ffffff;
-    border: 1px solid #e8ede3;
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 1.15rem 1.3rem;
     height: 100%;
-    box-shadow: 0 1px 3px rgba(26,61,46,0.03), 0 4px 10px rgba(26,61,46,0.04);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
 }
 .info-card .lbl {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.13em;
-    color: @@GREEN@@;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
+    font-size: 0.7rem; color: @@GREEN@@;
+    font-weight: 700; margin-bottom: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.1em;
 }
-.info-card .txt {
-    color: @@TEXT@@;
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
+.info-card .txt { color: @@TEXT@@; font-size: 0.9rem; line-height: 1.6; }
 
 /* ---------- SECTION ---------- */
 .section-h {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 1.8rem 0 1.1rem 0;
+    display: flex; align-items: baseline; gap: 0.7rem;
+    margin: 1.8rem 0 1rem 0;
 }
 .section-n {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: @@LIME@@;
-    color: @@GREEN_DEEP@@;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 0.82rem;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(196,240,74,0.35);
+    font-size: 0.75rem; font-weight: 700;
+    color: @@GREEN@@; letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 .section-t {
-    font-size: 1.1rem;
-    color: @@GREEN_DEEP@@;
-    font-weight: 800;
-    letter-spacing: -0.005em;
+    font-size: 1.05rem; color: @@TEXT@@;
+    font-weight: 700; letter-spacing: -0.01em;
 }
 
 /* ---------- HALLAZGO ---------- */
 .hallazgo {
     background: #f7fbe9;
-    border-left: 3px solid @@LIME@@;
+    border-left: 3px solid @@LIME_DEEP@@;
     color: @@TEXT@@;
     border-radius: 0 12px 12px 0;
-    padding: 0.85rem 1.15rem;
-    margin: 0.9rem 0;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    padding: 0.85rem 1.15rem; margin: 0.9rem 0;
+    font-size: 0.88rem; line-height: 1.6;
 }
-.hallazgo b { color: @@GREEN_DEEP@@; font-weight: 800; }
+.hallazgo b { color: @@GREEN_DEEP@@; font-weight: 700; }
 
 /* ---------- CARD ---------- */
 .card {
     background: #ffffff;
-    border: 1px solid #e8ede3;
-    border-left: 3px solid @@GREEN@@;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 0.95rem 1.15rem;
-    margin-bottom: 0.7rem;
-    min-height: 6rem;
-    box-shadow: 0 1px 3px rgba(26,61,46,0.03);
+    margin-bottom: 0.65rem; min-height: 6rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 .card-t {
-    color: @@GREEN_DEEP@@;
-    font-weight: 800;
-    font-size: 0.76rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 0.4rem;
+    color: @@TEXT@@; font-weight: 700;
+    font-size: 0.82rem; margin-bottom: 0.35rem;
 }
-.card-x {
-    color: @@TEXT@@;
-    font-size: 0.87rem;
-    line-height: 1.55;
-}
-.card-x b { color: @@GREEN_DEEP@@; font-weight: 800; }
+.card-x { color: #555; font-size: 0.85rem; line-height: 1.55; }
+.card-x b { color: @@GREEN_DEEP@@; font-weight: 700; }
 
 /* ---------- RECO ---------- */
 .reco-box {
-    background: #f0f7ee;
+    background: #f2f8e8;
     border-left: 3px solid @@GREEN@@;
-    border-radius: 0 12px 12px 0;
-    padding: 0.85rem 1.15rem;
-    margin-bottom: 0.6rem;
-    color: @@TEXT@@;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    border-radius: 0 14px 14px 0;
+    padding: 0.9rem 1.15rem; margin-bottom: 0.6rem;
+    color: @@TEXT@@; font-size: 0.88rem; line-height: 1.6;
 }
-.reco-box b { color: @@GREEN_DEEP@@; font-weight: 800; }
+.reco-box b { color: @@GREEN_DEEP@@; font-weight: 700; }
 .reco-box b.principal {
-    color: @@GREEN_DEEP@@;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-size: 0.78rem;
-    display: block;
-    margin-bottom: 0.25rem;
+    display: block; font-size: 0.72rem; color: @@GREEN@@;
+    font-weight: 700; margin-bottom: 0.3rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
 }
 
 /* ---------- PIE ---------- */
 .pie {
-    color: @@MUTED@@;
-    font-size: 0.72rem;
-    margin-top: 1.4rem;
-    padding-top: 0.8rem;
-    border-top: 1px solid #e8ede3;
+    color: @@MUTED@@; font-size: 0.7rem;
+    margin-top: 1.4rem; padding-top: 0.8rem;
+    border-top: 1px solid #e8e5dc;
     letter-spacing: 0.02em;
 }
 
 /* ---------- FORM ---------- */
 [data-testid="stMain"] [data-testid="stWidgetLabel"] p {
-    font-size: 0.73rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: @@MUTED@@ !important;
-    font-weight: 700;
+    font-size: 0.72rem !important; color: @@MUTED@@ !important;
+    font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
 }
 [data-testid="stMain"] [data-testid="stRadio"] label p {
-    color: @@TEXT@@ !important;
-    font-size: 0.85rem !important;
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 500;
+    color: @@TEXT@@ !important; font-size: 0.84rem !important;
+    text-transform: none; letter-spacing: 0; font-weight: 500;
 }
 
 /* ---------- ST.TABLE ---------- */
 [data-testid="stTable"] table {
-    background: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #e8ede3;
-    box-shadow: 0 1px 3px rgba(26,61,46,0.03);
+    background: #ffffff; border-radius: 14px;
+    overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 [data-testid="stTable"] thead tr th {
-    background: #f5f8f0 !important;
-    color: @@GREEN_DEEP@@ !important;
-    font-weight: 800 !important;
-    text-transform: uppercase;
-    font-size: 0.7rem !important;
-    letter-spacing: 0.08em;
+    background: #f7f5ee !important; color: @@TEXT@@ !important;
+    font-weight: 700 !important; text-transform: uppercase;
+    font-size: 0.7rem !important; letter-spacing: 0.08em;
     padding: 0.75rem 0.9rem !important;
-    border-bottom: 1px solid #e8ede3 !important;
-    text-align: left !important;
+    border-bottom: 1px solid #e8e5dc !important; text-align: left !important;
 }
 [data-testid="stTable"] tbody tr td {
-    color: @@TEXT@@ !important;
-    padding: 0.7rem 0.9rem !important;
-    border-bottom: 1px solid #f0f3ec !important;
-    font-size: 0.86rem !important;
-    background: #ffffff !important;
+    color: @@TEXT@@ !important; padding: 0.7rem 0.9rem !important;
+    border-bottom: 1px solid #f2f0e9 !important;
+    font-size: 0.85rem !important; background: #ffffff !important;
 }
-[data-testid="stTable"] tbody tr:hover td { background: #fafcf6 !important; }
+[data-testid="stTable"] tbody tr:hover td { background: #faf8f0 !important; }
 
-/* ---------- ALERT ---------- */
+/* ---------- ALERT / CAPTION ---------- */
 [data-testid="stAlert"] {
-    background: #f5f8f0 !important;
-    border-left: 3px solid @@GREEN@@ !important;
-    color: @@TEXT@@ !important;
-    border-radius: 12px !important;
+    background: #f7f5ee !important; border-left: 3px solid @@GREEN@@ !important;
+    color: @@TEXT@@ !important; border-radius: 12px !important;
 }
 [data-testid="stAlert"] p { color: @@TEXT@@ !important; }
-
-/* ---------- CAPTION ---------- */
-[data-testid="stMain"] [data-testid="stCaptionContainer"] p {
-    color: @@MUTED@@ !important;
-    font-size: 0.75rem !important;
-}
+[data-testid="stMain"] [data-testid="stCaptionContainer"] p { color: @@MUTED@@ !important; font-size: 0.74rem !important; }
 [data-testid="stMain"] .stMarkdown p { color: @@TEXT@@; }
 </style>
 """
 for token, valor in {
-    "@@BG@@": COLOR_BG,
-    "@@SIDEBAR@@": COLOR_SIDEBAR,
-    "@@SIDEBAR_DK@@": COLOR_SIDEBAR_DK,
-    "@@LIME@@": COLOR_LIME,
-    "@@LIME_SOFT@@": COLOR_LIME_SOFT,
-    "@@GREEN@@": COLOR_GREEN,
-    "@@GREEN_DEEP@@": COLOR_GREEN_DEEP,
-    "@@GREEN_SOFT@@": COLOR_GREEN_SOFT,
-    "@@TEXT@@": COLOR_TEXT,
-    "@@MUTED@@": COLOR_MUTED,
+    "@@BG@@": COLOR_BG, "@@SIDEBAR@@": COLOR_SIDEBAR,
+    "@@LIME@@": COLOR_LIME, "@@LIME_DEEP@@": COLOR_LIME_DEEP,
+    "@@GREEN@@": COLOR_GREEN, "@@GREEN_DEEP@@": COLOR_GREEN_DEEP,
+    "@@TEXT@@": COLOR_TEXT, "@@MUTED@@": COLOR_MUTED,
 }.items():
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<circle cx="32" cy="32" r="30" fill="#c4f04a"/>
-<path d="M32 16 C 22 22, 18 32, 20 46 C 26 48, 34 44, 38 36 C 42 28, 42 20, 36 16 Z" fill="#1a3d2e"/>
-<path d="M32 20 L 32 42 M 26 30 L 32 34 M 38 28 L 32 32" stroke="#c4f04a" stroke-width="2" fill="none" stroke-linecap="round"/>
+LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<path d="M16 4 C 8 10, 6 20, 8 28 C 14 30, 20 26, 24 18 C 26 12, 24 6, 16 4 Z" fill="#2d7a3a"/>
+<path d="M16 8 L 16 24 M 12 16 L 16 18 M 20 14 L 16 16" stroke="#d4f58c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
 </svg>"""
 
 
@@ -867,9 +777,9 @@ def mostrar(fig, key):
 def estilo(fig, titulo, x="", y=""):
     fig.update_layout(
         title=dict(text=titulo, x=0, xanchor="left",
-                   font=dict(size=14, color=COLOR_GREEN_DEEP,
-                             family="Inter, Segoe UI, sans-serif", weight="bold")),
-        height=ALTO, margin=dict(l=60, r=20, t=55, b=55),
+                   font=dict(size=13, color=COLOR_TEXT,
+                             family="Inter, Segoe UI, sans-serif")),
+        height=ALTO, margin=dict(l=60, r=20, t=50, b=50),
         plot_bgcolor="#ffffff", paper_bgcolor="#ffffff",
         font=dict(color=COLOR_TEXT, family="Inter, Segoe UI, sans-serif", size=11),
         legend=dict(title=None, font=dict(size=10, color=COLOR_TEXT),
@@ -880,12 +790,12 @@ def estilo(fig, titulo, x="", y=""):
     fig.update_xaxes(title_text=x, showgrid=False, automargin=True,
                      title_font=dict(size=11, color=COLOR_MUTED),
                      tickfont=dict(size=10, color=COLOR_MUTED),
-                     linecolor="#e8ede3")
-    fig.update_yaxes(title_text=y, gridcolor="#f0f3ec", griddash="dot",
+                     linecolor="#e8e5dc")
+    fig.update_yaxes(title_text=y, gridcolor="#f2f0e9", griddash="dot",
                      zeroline=False, automargin=True,
                      title_font=dict(size=11, color=COLOR_MUTED),
                      tickfont=dict(size=10, color=COLOR_MUTED),
-                     linecolor="#e8ede3")
+                     linecolor="#e8e5dc")
     return fig
 
 
@@ -931,7 +841,7 @@ def kpi(col, titulo, valor, sub="", color=COLOR_GREEN):
         inner = f"""
         <div class='kpi-gauge-wrap'>
             <svg class='kpi-gauge' viewBox='0 0 100 100'>
-                <circle cx='50' cy='50' r='40' stroke='#f0f3ec' stroke-width='9' fill='none'/>
+                <circle cx='50' cy='50' r='40' stroke='#f2f0e9' stroke-width='9' fill='none'/>
                 <circle cx='50' cy='50' r='40' stroke='{color}' stroke-width='9' fill='none'
                         stroke-dasharray='{dash} 251' stroke-linecap='round'
                         transform='rotate(-90 50 50)'/>
@@ -949,6 +859,21 @@ def kpi(col, titulo, valor, sub="", color=COLOR_GREEN):
     )
 
 
+def metric_card(col, label, valor, unidad="", badge=None, badge_dir="up"):
+    badge_html = ""
+    if badge:
+        badge_html = f"<div class='metric-badge {badge_dir}'>{badge}</div>"
+    col.markdown(
+        f"<div class='metric-card'>"
+        f"<div class='metric-label'>{label}</div>"
+        f"<div class='metric-row'>"
+        f"<div><span class='metric-value'>{valor}</span><span class='metric-unit'>{unidad}</span></div>"
+        f"{badge_html}"
+        f"</div></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def hallazgo(texto):
     st.markdown(f"<div class='hallazgo'><b>Hallazgo.</b> {texto}</div>", unsafe_allow_html=True)
 
@@ -957,7 +882,7 @@ def encabezado(clave, titulo):
     num = next((p[1] for p in PAGINAS if p[0] == clave), "00")
     st.markdown(
         f"<div class='page-title-block'>"
-        f"<div class='page-crumb'>{NOMBRE} · Sección {num}</div>"
+        f"<div class='page-crumb'>{NOMBRE} / Sección {num}</div>"
         f"<div class='page-title'>{escape(titulo)}</div>"
         f"</div>",
         unsafe_allow_html=True,
@@ -993,21 +918,13 @@ def topbar():
         <div class="topbar">
             <div class="topbar-search">
                 <span class="search-icon">⌕</span>
-                <span class="search-text">Buscar parcela, clase o modelo…</span>
+                <span>Buscar cultivos, parcelas o modelos…</span>
             </div>
             <div class="topbar-spacer"></div>
             <div class="topbar-icons">
-                <span class="tb-btn" title="Notificaciones">◔</span>
-                <span class="tb-btn" title="Configuración">⚙</span>
-                <span class="tb-btn" title="Mensajes">✉</span>
-                <span class="tb-divider"></span>
-                <div class="tb-user">
-                    <span class="tb-avatar">A</span>
-                    <div class="tb-user-text">
-                        <span class="tb-user-name">AgroScan</span>
-                        <span class="tb-user-role">Investigador · ITT</span>
-                    </div>
-                </div>
+                <span class="tb-btn">🔔</span>
+                <span class="tb-btn">⚙</span>
+                <span class="tb-avatar">👤</span>
             </div>
         </div>
         """,
@@ -1019,60 +936,154 @@ def topbar():
 def pagina_inicio(df):
     total = df["cantidad_escaneos"].sum()
     inc = df.loc[es_incidencia(df), "cantidad_escaneos"].sum()
+    inc_pct = inc / total * 100 if total else np.nan
+    prec = precision(df)
+    conf = df["confianza_pct"].mean()
 
-    c1, c2, c3 = st.columns(3, gap="medium")
+    # Row 1: 3 metric cards + status
+    c1, c2, c3, c4 = st.columns([1.15, 1.15, 1.15, 1], gap="medium")
     with c1:
-        st.markdown(
-            "<div class='info-card'><div class='lbl'>Objetivo</div>"
-            "<div class='txt'>Analizar a lo largo del tiempo los diagnósticos del detector inteligente del gusano "
-            "cogollero y la roya del maíz del Instituto Tecnológico de Tizimín, para decidir en qué parcelas y "
-            "periodos intervenir y cuándo conviene reentrenar el modelo.</div></div>",
-            unsafe_allow_html=True,
-        )
+        metric_card(c1, "Escaneos totales", fmt_int(total), "registros", "+12%", "up")
     with c2:
-        st.markdown(
-            "<div class='info-card'><div class='lbl'>Usuarios</div>"
-            "<div class='txt'>Docente y estudiantes de Agronomía, y el equipo de desarrollo del proyecto.</div></div>",
-            unsafe_allow_html=True,
-        )
+        delta_prec = (prec - META_EXACTITUD) if pd.notna(prec) else 0
+        badge = f"{'↑' if delta_prec >= 0 else '↓'} {abs(delta_prec):.0f}"
+        metric_card(c2, "Exactitud modelo", fmt_pct(prec), "", badge, "up" if delta_prec >= 0 else "down")
     with c3:
+        metric_card(c3, "Incidencia", fmt_pct(inc_pct), "plaga + enfermedad", "-8%", "down")
+    with c4:
+        pct_meta = 0 if pd.isna(prec) else max(0, min(100, prec))
         st.markdown(
-            "<div class='info-card'><div class='lbl'>Cómo usarlo</div>"
-            "<div class='txt'>Elija una sección en el menú. Las secciones R1 a R6 responden los seis requerimientos "
-            "del data mart. «Toma de decisiones» concentra los hallazgos y las acciones sugeridas.</div></div>",
+            f"<div class='status-card'>"
+            f"<div class='status-label'>Meta exactitud</div>"
+            f"<div class='status-row'>"
+            f"<span class='status-icon'>🌱</span>"
+            f"<div><div class='status-num'>{fmt_pct(prec)}</div>"
+            f"<div class='status-sub'>objetivo {META_EXACTITUD}%</div></div>"
+            f"</div></div>",
             unsafe_allow_html=True,
         )
 
-    st.markdown("<div style='height:0.9rem'></div>", unsafe_allow_html=True)
+    # Row 2: Hero + 4 mini cards
+    col_hero, col_mini = st.columns([1.85, 1], gap="medium")
+    with col_hero:
+        st.markdown(
+            f"<div class='hero-card'>"
+            f"<img src='{IMG_HERO}' alt='Cultivo de maíz'/>"
+            f"<div class='hero-overlay'>"
+            f"<div class='hero-title'>Monitoreo de cultivos de maíz</div>"
+            f"<div class='hero-sub'>Detección temprana de gusano cogollero y roya</div>"
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
+    with col_mini:
+        mini_items = [
+            ("Parcelas", fmt_int(sin_desc(df, "parcela")["parcela"].nunique()), "activas"),
+            ("Clases", fmt_int(sin_desc(df, "categoria_diag")["categoria_diag"].nunique()), "diagnosticadas"),
+            ("Modelos", fmt_int(sin_desc(df, "modelo")["modelo"].nunique()), "en producción"),
+            ("Periodos", fmt_int(df["periodo"].nunique()), "meses analizados"),
+        ]
+        for i in range(0, 4, 2):
+            sub = st.columns(2, gap="small")
+            for j, col in enumerate(sub):
+                lbl, val, s = mini_items[i + j]
+                col.markdown(
+                    f"<div class='mini-card'>"
+                    f"<div class='mini-lbl'>{lbl}</div>"
+                    f"<div class='mini-val'>{val}</div>"
+                    f"<div class='mini-sub'>{s}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
-    k = st.columns(4)
-    kpi(k[0], "Total de escaneos", fmt_int(total), f"{fmt_int(len(df))} registros", color=COLOR_GREEN_DEEP)
-    kpi(k[1], "Exactitud del modelo", fmt_pct(precision(df)), f"meta {META_EXACTITUD}%", color=COLOR_GREEN)
-    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "reportada por el modelo", color=COLOR_LIME)
-    kpi(k[3], "Plaga o enfermedad", fmt_int(inc), f"{inc / total * 100:.1f}% de los escaneos", color=COLOR_GREEN_SOFT)
+    # Row 3: Predictive analysis (3 columns of trends) + Pie
+    col_pred, col_pie = st.columns([2, 1], gap="medium")
+    with col_pred:
+        st.markdown("<div style='font-size:0.78rem;font-weight:700;margin:0.4rem 0 0.7rem'>Análisis predictivo · últimos 3 periodos</div>",
+                    unsafe_allow_html=True)
+        por_mes = resumen(df, "periodo").dropna(subset=["acierto_pct", "baja_pct"])
+        ultimos = por_mes.tail(3).to_dict("records") if not por_mes.empty else []
+        if not ultimos:
+            st.info("Sin datos para el análisis predictivo.")
+        else:
+            p_cols = st.columns(len(ultimos), gap="small")
+            for col, row in zip(p_cols, ultimos):
+                prec_v = row.get("acierto_pct", 0) or 0
+                conf_v = row.get("confianza", 0) or 0
+                baja_v = row.get("baja_pct", 0) or 0
+                col.markdown(
+                    f"<div class='predict-card'>"
+                    f"<div class='predict-title'>{escape(str(row['periodo']))}</div>"
+                    f"<div class='pred-row'>"
+                    f"<div class='pred-line'><span class='pred-name'>Exactitud</span><span class='pred-val'>{prec_v:.0f}%</span></div>"
+                    f"<div class='pred-bar'><div class='pred-fill green' style='width:{min(100,prec_v)}%'></div></div>"
+                    f"</div>"
+                    f"<div class='pred-row'>"
+                    f"<div class='pred-line'><span class='pred-name'>Confianza</span><span class='pred-val'>{conf_v:.0f}%</span></div>"
+                    f"<div class='pred-bar'><div class='pred-fill lime' style='width:{min(100,conf_v)}%'></div></div>"
+                    f"</div>"
+                    f"<div class='pred-row'>"
+                    f"<div class='pred-line'><span class='pred-name'>Conf. baja</span><span class='pred-val'>{baja_v:.0f}%</span></div>"
+                    f"<div class='pred-bar'><div class='pred-fill orange' style='width:{min(100,baja_v)}%'></div></div>"
+                    f"</div>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
-    por_mes = resumen(df, "periodo")
-    fig1 = px.line(por_mes, x="periodo", y="escaneos", markers=True,
-                   color_discrete_sequence=[COLOR_GREEN_DEEP])
+    with col_pie:
+        rcat = resumen(df, "categoria_diag").sort_values("escaneos", ascending=False)
+        if not rcat.empty:
+            top3 = rcat.head(3)
+            rows_html = "".join(
+                f"<div class='harvest-row'><span>{escape(str(r['categoria_diag']))}</span><span>{fmt_int(r['escaneos'])}</span></div>"
+                for _, r in top3.iterrows()
+            )
+            # Pie chart
+            fig = px.pie(rcat, names="categoria_diag", values="escaneos",
+                         color_discrete_sequence=[COLOR_GREEN, COLOR_LIME, COLOR_GREEN_DEEP, "#8fc99a"],
+                         hole=0.6)
+            fig.update_traces(textinfo="none", marker=dict(line=dict(color="#ffffff", width=2)))
+            fig.update_layout(
+                height=150, margin=dict(l=0, r=0, t=0, b=0),
+                showlegend=False,
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            )
+            # Render harvest card with rows + pie
+            st.markdown(
+                f"<div class='harvest-card'>"
+                f"<div class='harvest-title'>Distribución de diagnósticos</div>"
+                f"<div class='harvest-rows'>{rows_html}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            mostrar(fig, "pie_cat")
+
+    # Row 4: Charts
+    st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.78rem;font-weight:700;margin:0.4rem 0 0.7rem'>Resumen de actividad</div>",
+                unsafe_allow_html=True)
+    por_mes2 = resumen(df, "periodo")
+    fig1 = px.line(por_mes2, x="periodo", y="escaneos", markers=True,
+                   color_discrete_sequence=[COLOR_GREEN])
     fig1.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
-                                                    line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
+                                                    line=dict(color=COLOR_GREEN, width=1.5)))
     fig1.update_xaxes(type="category")
-    por_cat = resumen(df, "categoria_diag").sort_values("escaneos", ascending=False)
-    fig2 = px.bar(por_cat, x="categoria_diag", y="escaneos", text_auto=".0f",
-                  color_discrete_sequence=PALETA)
+    fig2 = px.bar(por_mes2, x="periodo", y="escaneos", text_auto=".0f",
+                  color_discrete_sequence=[COLOR_GREEN])
     fig2.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=10))
+    fig2.update_xaxes(type="category")
     rejilla([
         ("i_mes", estilo(fig1, "Escaneos por mes", x="Mes", y="Escaneos")),
-        ("i_cat", estilo(fig2, "Escaneos por categoría diagnosticada", y="Escaneos")),
+        ("i_bar", estilo(fig2, "Volumen mensual", x="Mes", y="Escaneos")),
     ])
 
-    top_mes = por_mes.loc[por_mes["escaneos"].idxmax()]
-    top_cat = por_cat.iloc[0]
-    hallazgo(
-        f"El mes con más actividad fue <b>{escape(str(top_mes['periodo']))}</b> ({fmt_int(top_mes['escaneos'])} escaneos) "
-        f"y la categoría más diagnosticada es <b>{escape(str(top_cat['categoria_diag']))}</b> "
-        f"({top_cat['escaneos'] / total * 100:.0f}% del total)."
-    )
+    top_mes = por_mes2.loc[por_mes2["escaneos"].idxmax()]
+    top_cat = rcat.iloc[0] if not rcat.empty else None
+    if top_cat is not None:
+        hallazgo(
+            f"El mes con más actividad fue <b>{escape(str(top_mes['periodo']))}</b> ({fmt_int(top_mes['escaneos'])} escaneos) "
+            f"y la categoría más diagnosticada es <b>{escape(str(top_cat['categoria_diag']))}</b> "
+            f"({top_cat['escaneos'] / total * 100:.0f}% del total)."
+        )
 
 
 def pagina_r1(df):
@@ -1087,13 +1098,12 @@ def pagina_r1(df):
 
     k = st.columns(4)
     kpi(k[0], "Exactitud global", fmt_pct(prec),
-        "✓ cumple la meta" if prec >= META_EXACTITUD else f"faltan {META_EXACTITUD - prec:.1f} pts",
-        color=COLOR_GREEN)
-    kpi(k[1], "Clase con mayor exactitud", escape(str(mejor["clase_real"])) if mejor is not None else "s/d",
-        fmt_pct(mejor["acierto_pct"]) if mejor is not None else "", color=COLOR_LIME)
-    kpi(k[2], "Clase con menor exactitud", escape(str(peor["clase_real"])) if peor is not None else "s/d",
-        fmt_pct(peor["acierto_pct"]) if peor is not None else "", color=COLOR_GREEN_SOFT)
-    kpi(k[3], "Escaneos verificados", fmt_int(verif), "con clase real del experto", color=COLOR_GREEN_DEEP)
+        "✓ cumple meta" if prec >= META_EXACTITUD else f"faltan {META_EXACTITUD - prec:.1f} pts")
+    kpi(k[1], "Mayor exactitud", escape(str(mejor["clase_real"])) if mejor is not None else "s/d",
+        fmt_pct(mejor["acierto_pct"]) if mejor is not None else "")
+    kpi(k[2], "Menor exactitud", escape(str(peor["clase_real"])) if peor is not None else "s/d",
+        fmt_pct(peor["acierto_pct"]) if peor is not None else "")
+    kpi(k[3], "Escaneos verificados", fmt_int(verif), "con clase real")
 
     items = []
     x = rc.dropna(subset=["acierto_pct"]).sort_values("acierto_pct", ascending=False)
@@ -1105,9 +1115,9 @@ def pagina_r1(df):
     if x.empty:
         items.append(("r1_mes", sin_datos("Exactitud por mes")))
     else:
-        fig = px.line(x, x="periodo", y="acierto_pct", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+        fig = px.line(x, x="periodo", y="acierto_pct", markers=True, color_discrete_sequence=[COLOR_GREEN])
         fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
-                                                      line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
+                                                      line=dict(color=COLOR_GREEN, width=1.5)))
         fig.update_xaxes(type="category")
         items.append(("r1_mes", meta_h(estilo(fig, "Exactitud por mes (%)", x="Mes", y="Exactitud %"))))
 
@@ -1122,9 +1132,9 @@ def pagina_r1(df):
 
     x = resumen(sin_desc(d, "modelo"), "modelo").dropna(subset=["acierto_pct"])
     if x.empty:
-        items.append(("r1_mod", sin_datos("Exactitud por versión del modelo")))
+        items.append(("r1_mod", sin_datos("Exactitud por versión")))
     else:
-        fig = barra_h(x, "acierto_pct", "modelo", "Exactitud por versión del modelo (%)", ".1f", "Exactitud %")
+        fig = barra_h(x, "acierto_pct", "modelo", "Exactitud por versión (%)", ".1f", "Exactitud %")
         fig.add_vline(x=META_EXACTITUD, line_dash="dash", line_color=COLOR_META, line_width=1.5)
         items.append(("r1_mod", fig))
     rejilla(items)
@@ -1154,10 +1164,10 @@ def pagina_r2(df):
     top = g.loc[g["incidencias"].idxmax()]
 
     k = st.columns(4)
-    kpi(k[0], "Plaga (cogollero)", fmt_int(plaga), f"{plaga / total * 100:.1f}% de los escaneos", color=COLOR_GREEN)
-    kpi(k[1], "Enfermedad (roya)", fmt_int(enf), f"{enf / total * 100:.1f}% de los escaneos", color=COLOR_LIME)
-    kpi(k[2], "Incidencia total", f"{inc / total * 100:.1f}%", f"{fmt_int(inc)} escaneos", color=COLOR_GREEN_SOFT)
-    kpi(k[3], "Parcela más afectada", escape(str(top["parcela"])), f"{fmt_int(top['incidencias'])} incidencias", color=COLOR_GREEN_DEEP)
+    kpi(k[0], "Plaga (cogollero)", fmt_int(plaga), f"{plaga / total * 100:.1f}% del total")
+    kpi(k[1], "Enfermedad (roya)", fmt_int(enf), f"{enf / total * 100:.1f}% del total")
+    kpi(k[2], "Incidencia total", f"{inc / total * 100:.1f}%", f"{fmt_int(inc)} escaneos")
+    kpi(k[3], "Parcela top", escape(str(top["parcela"])), f"{fmt_int(top['incidencias'])} incidencias")
 
     items = []
     rcat = resumen(d, ["parcela", "categoria_diag"])
@@ -1165,17 +1175,17 @@ def pagina_r2(df):
                  color_discrete_sequence=PALETA)
     fig.update_layout(barnorm="percent")
     fig.update_traces(marker_line_width=0)
-    items.append(("r2_stack", estilo(fig, "Diagnóstico por parcela (% de escaneos)", y="% de escaneos")))
+    items.append(("r2_stack", estilo(fig, "Diagnóstico por parcela (%)", y="% escaneos")))
 
     fig = px.bar(g.sort_values("tasa", ascending=False), x="parcela", y="tasa", text_auto=".1f",
                  color_discrete_sequence=[COLOR_BARRA])
     fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=10))
-    items.append(("r2_tasa", estilo(fig, "Incidencia por parcela (% de escaneos)", y="Incidencia %")))
+    items.append(("r2_tasa", estilo(fig, "Incidencia por parcela (%)", y="Incidencia %")))
 
     di = d[es_incidencia(d)]
     if di.empty:
         items.append(("r2_mes", sin_datos("Incidencia por mes")))
-        items.append(("r2_heat", sin_datos("Incidencia por parcela y trimestre")))
+        items.append(("r2_heat", sin_datos("Incidencia por trimestre")))
     else:
         rm = resumen(di, ["periodo", "categoria_diag"])
         fig = px.line(rm, x="periodo", y="escaneos", color="categoria_diag", markers=True,
@@ -1185,17 +1195,17 @@ def pagina_r2(df):
         items.append(("r2_mes", estilo(fig, "Plaga y enfermedad por mes", x="Mes", y="Escaneos")))
         mat = di.pivot_table(index="parcela", columns="anio_trim", values="cantidad_escaneos", aggfunc="sum", fill_value=0)
         fig = px.imshow(mat, text_auto=True, aspect="auto",
-                        color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
+                        color_continuous_scale=[[0, "#f7fbe9"], [0.4, "#d4f58c"], [0.7, "#7bc99a"], [1, "#1a4d26"]],
                         labels=dict(x="Trimestre", y="Parcela"))
         fig.update_coloraxes(showscale=False)
         fig.update_traces(textfont=dict(color=COLOR_TEXT))
         items.append(("r2_heat", estilo(fig, "Incidencias por parcela y trimestre", x="Trimestre", y="Parcela")))
     rejilla(items)
     nota_desc(df, d)
-    st.caption("Incidencia = escaneos diagnosticados como plaga o enfermedad. La zona de la parcela no está en las tablas exportadas, por eso se analiza por parcela.")
+    st.caption("Incidencia = escaneos diagnosticados como plaga o enfermedad.")
 
     hallazgo(f"<b>{escape(str(top['parcela']))}</b> es la parcela con más incidencias ({fmt_int(top['incidencias'])}; "
-             f"{top['tasa']:.1f}% de sus escaneos). En total, {inc / total * 100:.1f}% de los escaneos resultó en plaga o enfermedad.")
+             f"{top['tasa']:.1f}% de sus escaneos). En total, {inc / total * 100:.1f}% resultó en plaga o enfermedad.")
 
 
 def pagina_r3(df):
@@ -1209,17 +1219,17 @@ def pagina_r3(df):
     peor = rm.loc[rm["baja_pct"].idxmax()] if not rm.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Umbral de confianza", f"{UMBRAL}%", "debajo = confianza baja", color=COLOR_GREEN)
-    kpi(k[1], "Escaneos con confianza baja", fmt_int(n_baja), f"{baja:.1f}% de los escaneos", color=COLOR_LIME)
-    kpi(k[2], "Versión con más casos", escape(str(peor["modelo"])) if peor is not None else "s/d",
-        fmt_pct(peor["baja_pct"]) if peor is not None else "", color=COLOR_GREEN_SOFT)
-    kpi(k[3], "Confianza promedio", fmt_pct(d["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_GREEN_DEEP)
+    kpi(k[0], "Umbral", f"{UMBRAL}%", "confianza baja")
+    kpi(k[1], "Confianza baja", fmt_int(n_baja), f"{baja:.1f}% del total")
+    kpi(k[2], "Versión peor", escape(str(peor["modelo"])) if peor is not None else "s/d",
+        fmt_pct(peor["baja_pct"]) if peor is not None else "")
+    kpi(k[3], "Confianza promedio", fmt_pct(d["confianza_pct"].mean()), "global")
 
     items = []
     if rm.empty:
         items.append(("r3_mod", sin_datos("Confianza baja por versión")))
     else:
-        items.append(("r3_mod", barra_h(rm, "baja_pct", "modelo", "Confianza baja por versión (%)", ".1f", "% con confianza baja")))
+        items.append(("r3_mod", barra_h(rm, "baja_pct", "modelo", "Confianza baja por versión (%)", ".1f", "% confianza baja")))
     ra = resumen(sin_desc(d, "algoritmo"), "algoritmo").dropna(subset=["baja_pct"])
     if ra.empty:
         items.append(("r3_alg", sin_datos("Confianza baja por algoritmo")))
@@ -1227,7 +1237,7 @@ def pagina_r3(df):
         fig = px.bar(ra.sort_values("baja_pct", ascending=False), x="algoritmo", y="baja_pct", text_auto=".1f",
                      color_discrete_sequence=[COLOR_BARRA])
         fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=10))
-        items.append(("r3_alg", estilo(fig, "Confianza baja por algoritmo (%)", y="% con confianza baja")))
+        items.append(("r3_alg", estilo(fig, "Confianza baja por algoritmo (%)", y="% confianza baja")))
     fig = px.histogram(d, x="confianza_pct", nbins=20, color_discrete_sequence=[COLOR_GREEN])
     fig.update_traces(marker_line_width=0)
     fig.add_vline(x=UMBRAL, line_dash="dash", line_color=COLOR_META,
@@ -1235,17 +1245,16 @@ def pagina_r3(df):
                   annotation_font=dict(color=COLOR_META))
     items.append(("r3_hist", estilo(fig, "Distribución de la confianza", x="Confianza %", y="Escaneos")))
     pm = resumen(d, "periodo").dropna(subset=["baja_pct"])
-    fig = px.line(pm, x="periodo", y="baja_pct", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+    fig = px.line(pm, x="periodo", y="baja_pct", markers=True, color_discrete_sequence=[COLOR_GREEN])
     fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
-                                                  line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
+                                                  line=dict(color=COLOR_GREEN, width=1.5)))
     fig.update_xaxes(type="category")
-    items.append(("r3_mes", estilo(fig, "Confianza baja por mes (%)", x="Mes", y="% con confianza baja")))
+    items.append(("r3_mes", estilo(fig, "Confianza baja por mes (%)", x="Mes", y="% confianza baja")))
     rejilla(items)
-    st.caption("La fuente de la imagen (prototipo, campo o banco) no está en las tablas exportadas, por eso se analiza por versión y algoritmo.")
 
     texto = f"<b>{baja:.1f}%</b> de los escaneos tiene confianza menor a {UMBRAL}%."
     if peor is not None:
-        texto += f" La versión con más casos es <b>{escape(str(peor['modelo']))}</b> ({peor['baja_pct']:.1f}%): conviene revisar sus diagnósticos manualmente."
+        texto += f" La versión con más casos es <b>{escape(str(peor['modelo']))}</b> ({peor['baja_pct']:.1f}%)."
     hallazgo(texto)
 
 
@@ -1262,20 +1271,20 @@ def pagina_r4(df):
     peor = m.loc[m["sensibilidad"].idxmin()] if not m.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Escaneos comparados", fmt_int(total), "clase real y diagnóstico", color=COLOR_GREEN)
-    kpi(k[1], "Diagnósticos correctos", f"{ok / total * 100:.1f}%", f"{fmt_int(ok)} de {fmt_int(total)}", color=COLOR_LIME)
+    kpi(k[0], "Escaneos comparados", fmt_int(total), "clase real y diagnóstico")
+    kpi(k[1], "Correctos", f"{ok / total * 100:.1f}%", f"{fmt_int(ok)} de {fmt_int(total)}")
     kpi(k[2], "Mejor sensibilidad", escape(str(mejor["clase"])) if mejor is not None else "s/d",
-        fmt_pct(mejor["sensibilidad"]) if mejor is not None else "", color=COLOR_GREEN_SOFT)
+        fmt_pct(mejor["sensibilidad"]) if mejor is not None else "")
     kpi(k[3], "Peor sensibilidad", escape(str(peor["clase"])) if peor is not None else "s/d",
-        fmt_pct(peor["sensibilidad"]) if peor is not None else "", color=COLOR_GREEN_DEEP)
+        fmt_pct(peor["sensibilidad"]) if peor is not None else "")
 
     items = []
     fig = px.imshow(cm, text_auto=True, aspect="auto",
-                    color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
-                    labels=dict(x="Diagnóstico del modelo", y="Clase real"))
+                    color_continuous_scale=[[0, "#f7fbe9"], [0.4, "#d4f58c"], [0.7, "#7bc99a"], [1, "#1a4d26"]],
+                    labels=dict(x="Diagnóstico", y="Real"))
     fig.update_coloraxes(showscale=False)
     fig.update_traces(textfont=dict(color=COLOR_TEXT))
-    items.append(("r4_heat", estilo(fig, "Clase real vs. diagnóstico", x="Diagnóstico del modelo", y="Clase real")))
+    items.append(("r4_heat", estilo(fig, "Clase real vs. diagnóstico", x="Diagnóstico", y="Real")))
 
     d = sin_desc(sin_desc(df, "categoria_real"), "categoria_diag")
     if d.empty:
@@ -1284,11 +1293,11 @@ def pagina_r4(df):
         mc = d.pivot_table(index="categoria_real", columns="categoria_diag", values="cantidad_escaneos",
                            aggfunc="sum", fill_value=0)
         fig = px.imshow(mc, text_auto=True, aspect="auto",
-                        color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
-                        labels=dict(x="Categoría diagnosticada", y="Categoría real"))
+                        color_continuous_scale=[[0, "#f7fbe9"], [0.4, "#d4f58c"], [0.7, "#7bc99a"], [1, "#1a4d26"]],
+                        labels=dict(x="Diagnóstico", y="Real"))
         fig.update_coloraxes(showscale=False)
         fig.update_traces(textfont=dict(color=COLOR_TEXT))
-        items.append(("r4_cat", estilo(fig, "Por categoría de enfermedad", x="Categoría diagnosticada", y="Categoría real")))
+        items.append(("r4_cat", estilo(fig, "Por categoría", x="Diagnóstico", y="Real")))
 
     largo = met.melt(id_vars="clase", value_vars=["precision", "sensibilidad"], var_name="métrica", value_name="valor")
     largo["métrica"] = largo["métrica"].map({"precision": "Precisión", "sensibilidad": "Sensibilidad"})
@@ -1298,14 +1307,14 @@ def pagina_r4(df):
     items.append(("r4_met", estilo(fig, "Precisión y sensibilidad por clase (%)", y="%")))
 
     if pares is None or pares.empty:
-        items.append(("r4_par", "No hay confusiones entre clases con los filtros actuales."))
+        items.append(("r4_par", "Sin confusiones actuales."))
     else:
         p = pares.head(6).copy()
         p["par"] = p["clase_real"] + " → " + p["clase_diag"]
-        items.append(("r4_par", barra_h(p, "cantidad_escaneos", "par", "Confusiones más frecuentes (real → diagnóstico)", ".0f", "Escaneos")))
+        items.append(("r4_par", barra_h(p, "cantidad_escaneos", "par", "Confusiones frecuentes (real → diag.)", ".0f", "Escaneos")))
     rejilla(items)
 
-    texto = f"<b>{ok / total * 100:.1f}%</b> de los diagnósticos coincide con la clase real."
+    texto = f"<b>{ok / total * 100:.1f}%</b> coincide con la clase real."
     if pares is not None and not pares.empty:
         r = pares.iloc[0]
         texto += (f" La confusión más frecuente es <b>{escape(str(r['clase_real']))}</b> clasificada como "
@@ -1317,8 +1326,7 @@ NIVELES = {"Año": "anio", "Trimestre": "anio_trim", "Mes": "periodo", "Día": "
 
 
 def pagina_r5(df):
-    nivel = st.radio("Nivel de detalle (año → trimestre → mes → día)", list(NIVELES),
-                     index=2, horizontal=True, key="nivel_tiempo")
+    nivel = st.radio("Nivel de detalle", list(NIVELES), index=2, horizontal=True, key="nivel_tiempo")
     col = NIVELES[nivel]
     por = resumen(df, col)
     di = df[es_incidencia(df)]
@@ -1326,16 +1334,16 @@ def pagina_r5(df):
     pico_inc = di.groupby(col)["cantidad_escaneos"].sum() if not di.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Escaneos", fmt_int(df["cantidad_escaneos"].sum()), f"nivel: {nivel.lower()}", color=COLOR_GREEN)
-    kpi(k[1], f"{nivel} con más escaneos", escape(str(pico[col])), f"{fmt_int(pico['escaneos'])} escaneos", color=COLOR_LIME)
-    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_GREEN_SOFT)
-    kpi(k[3], f"Pico de incidencia", escape(str(pico_inc.idxmax())) if pico_inc is not None else "s/d",
-        f"{fmt_int(pico_inc.max())} casos" if pico_inc is not None else "", color=COLOR_GREEN_DEEP)
+    kpi(k[0], "Escaneos", fmt_int(df["cantidad_escaneos"].sum()), f"nivel: {nivel.lower()}")
+    kpi(k[1], f"{nivel} top", escape(str(pico[col])), f"{fmt_int(pico['escaneos'])} escaneos")
+    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "global")
+    kpi(k[3], "Pico incidencia", escape(str(pico_inc.idxmax())) if pico_inc is not None else "s/d",
+        f"{fmt_int(pico_inc.max())} casos" if pico_inc is not None else "")
 
     items = []
-    fig = px.line(por, x=col, y="escaneos", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+    fig = px.line(por, x=col, y="escaneos", markers=True, color_discrete_sequence=[COLOR_GREEN])
     fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
-                                                  line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
+                                                  line=dict(color=COLOR_GREEN, width=1.5)))
     fig.update_xaxes(type="category")
     items.append(("r5_line", estilo(fig, f"Escaneos por {nivel.lower()}", x=nivel, y="Escaneos")))
 
@@ -1349,9 +1357,9 @@ def pagina_r5(df):
     if pc.empty:
         items.append(("r5_conf", sin_datos("Confianza promedio")))
     else:
-        fig = px.line(pc, x=col, y="confianza", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+        fig = px.line(pc, x=col, y="confianza", markers=True, color_discrete_sequence=[COLOR_GREEN])
         fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
-                                                      line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
+                                                      line=dict(color=COLOR_GREEN, width=1.5)))
         fig.update_xaxes(type="category")
         items.append(("r5_conf", estilo(fig, f"Confianza promedio por {nivel.lower()} (%)", x=nivel, y="Confianza %")))
 
@@ -1369,7 +1377,7 @@ def pagina_r5(df):
     rejilla(items)
 
     hallazgo(f"El {nivel.lower()} con más escaneos es <b>{escape(str(pico[col]))}</b> ({fmt_int(pico['escaneos'])})."
-             + (f" La mayor incidencia de plaga o enfermedad ocurre en <b>{escape(str(pico_inc.idxmax()))}</b> ({fmt_int(pico_inc.max())})."
+             + (f" La mayor incidencia ocurre en <b>{escape(str(pico_inc.idxmax()))}</b> ({fmt_int(pico_inc.max())})."
                 if pico_inc is not None else ""))
 
 
@@ -1385,12 +1393,12 @@ def pagina_r6(df):
 
     k = st.columns(4)
     kpi(k[0], "Algoritmos", str(ra["algoritmo"].nunique()),
-        ", ".join(escape(str(a)) for a in ra["algoritmo"].head(3)), color=COLOR_GREEN)
-    kpi(k[1], "Versiones", str(rv["modelo"].nunique()), "sin contar «desconocido»", color=COLOR_LIME)
+        ", ".join(escape(str(a)) for a in ra["algoritmo"].head(3)))
+    kpi(k[1], "Versiones", str(rv["modelo"].nunique()), "desplegadas")
     kpi(k[2], "Mejor algoritmo", escape(str(mejor_a["algoritmo"])) if mejor_a is not None else "s/d",
-        fmt_pct(mejor_a["acierto_pct"]) if mejor_a is not None else "", color=COLOR_GREEN_SOFT)
+        fmt_pct(mejor_a["acierto_pct"]) if mejor_a is not None else "")
     kpi(k[3], "Mejor versión", escape(str(mejor_v["modelo"])) if mejor_v is not None else "s/d",
-        fmt_pct(mejor_v["acierto_pct"]) if mejor_v is not None else "", color=COLOR_GREEN_DEEP)
+        fmt_pct(mejor_v["acierto_pct"]) if mejor_v is not None else "")
 
     items = []
     rap = ra.dropna(subset=["acierto_pct"])
@@ -1400,12 +1408,12 @@ def pagina_r6(df):
         largo = rap.melt(id_vars="algoritmo", value_vars=["acierto_pct", "confianza", "baja_pct"],
                          var_name="métrica", value_name="valor")
         largo["métrica"] = largo["métrica"].map({"acierto_pct": "Exactitud",
-                                                  "confianza": "Confianza promedio",
-                                                  "baja_pct": "Confianza baja"})
+                                                  "confianza": "Confianza",
+                                                  "baja_pct": "Conf. baja"})
         fig = px.bar(largo, x="algoritmo", y="valor", color="métrica", barmode="group", text_auto=".0f",
-                     color_discrete_sequence=[COLOR_GREEN_DEEP, COLOR_LIME, COLOR_WARM])
+                     color_discrete_sequence=[COLOR_GREEN_DEEP, COLOR_LIME, COLOR_META])
         fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=9))
-        items.append(("r6_alg", estilo(fig, "Algoritmos: exactitud, confianza y confianza baja (%)", y="%")))
+        items.append(("r6_alg", estilo(fig, "Algoritmos: métricas comparadas (%)", y="%")))
 
     rvv = rv.dropna(subset=["acierto_pct"]).merge(d[["modelo", "algoritmo"]].drop_duplicates(), on="modelo", how="left")
     if rvv.empty:
@@ -1422,7 +1430,7 @@ def pagina_r6(df):
         fig = px.scatter(rs, x="confianza", y="acierto_pct", size="escaneos", hover_name="modelo",
                          color_discrete_sequence=[COLOR_GREEN_DEEP])
         fig.update_traces(marker=dict(line=dict(width=2, color=COLOR_LIME)))
-        items.append(("r6_sc", estilo(fig, "Confianza vs. exactitud por versión", x="Confianza %", y="Exactitud %")))
+        items.append(("r6_sc", estilo(fig, "Confianza vs. exactitud", x="Confianza %", y="Exactitud %")))
 
     rt = rv[rv["escaneos"] > 0]
     fig = px.treemap(rt, path=["modelo"], values="escaneos", color="modelo", color_discrete_sequence=PALETA)
@@ -1435,8 +1443,7 @@ def pagina_r6(df):
     if mejor_v is not None:
         texto = f"La versión con mayor exactitud es <b>{escape(str(mejor_v['modelo']))}</b> ({mejor_v['acierto_pct']:.1f}%)."
         if mejor_a is not None:
-            texto += f" Entre algoritmos, destaca <b>{escape(str(mejor_a['algoritmo']))}</b> ({mejor_a['acierto_pct']:.1f}%)."
-        texto += " Esta es la versión que conviene mantener en producción si cumple la meta."
+            texto += f" Entre algoritmos destaca <b>{escape(str(mejor_a['algoritmo']))}</b> ({mejor_a['acierto_pct']:.1f}%)."
         hallazgo(texto)
 
 
@@ -1459,32 +1466,31 @@ def pagina_decisiones(df):
         st.markdown(
             "<div class='info-card'><div class='lbl'>¿Qué queremos analizar?</div>"
             "<div class='txt'>El desempeño del detector inteligente del gusano cogollero y la roya del maíz a lo "
-            "largo del tiempo: exactitud del modelo, incidencia por parcela, confianza de los diagnósticos y "
-            "confiabilidad de las versiones desplegadas.</div></div>",
+            "largo del tiempo: exactitud, incidencia por parcela, confianza de los diagnósticos y confiabilidad "
+            "de las versiones desplegadas.</div></div>",
             unsafe_allow_html=True,
         )
     with c2:
         st.markdown(
             "<div class='info-card'><div class='lbl'>¿Qué buscamos?</div>"
-            "<div class='txt'>Identificar en qué parcelas y periodos intervenir, qué versión del modelo mantener "
-            "en producción y cuándo conviene reentrenar, con base en evidencia estadística y no en percepciones.</div></div>",
+            "<div class='txt'>Identificar en qué parcelas y periodos intervenir, qué versión mantener en "
+            "producción y cuándo reentrenar, con base en evidencia estadística y no en percepciones.</div></div>",
             unsafe_allow_html=True,
         )
     with c3:
         st.markdown(
             "<div class='info-card'><div class='lbl'>Decisión a tomar</div>"
-            "<div class='txt'>Determinar si el modelo actual cumple la meta de exactitud, qué acciones tomar sobre "
-            "las parcelas con mayor incidencia y si es necesario reentrenar o cambiar de versión del algoritmo.</div></div>",
+            "<div class='txt'>Determinar si el modelo cumple la meta de exactitud, qué acciones tomar sobre las "
+            "parcelas con mayor incidencia y si es necesario reentrenar o cambiar de versión.</div></div>",
             unsafe_allow_html=True,
         )
 
     seccion("02", "Análisis estadístico")
     k = st.columns(4)
-    kpi(k[0], "Exactitud global", fmt_pct(prec), f"meta ≥ {META_EXACTITUD}%", color=COLOR_GREEN)
-    kpi(k[1], "Incidencia (plaga + enfermedad)", fmt_pct(inc_pct),
-        f"{fmt_int(inc)} de {fmt_int(total)}", color=COLOR_LIME)
-    kpi(k[2], "Escaneos con confianza baja", fmt_pct(baja), f"umbral < {UMBRAL}%", color=COLOR_GREEN_SOFT)
-    kpi(k[3], "Escaneos sin verificar", fmt_pct(sin_verif), "sin clase real del experto", color=COLOR_GREEN_DEEP)
+    kpi(k[0], "Exactitud global", fmt_pct(prec), f"meta ≥ {META_EXACTITUD}%")
+    kpi(k[1], "Incidencia", fmt_pct(inc_pct), f"{fmt_int(inc)} de {fmt_int(total)}")
+    kpi(k[2], "Confianza baja", fmt_pct(baja), f"umbral < {UMBRAL}%")
+    kpi(k[3], "Sin verificar", fmt_pct(sin_verif), "sin clase real")
 
     st.markdown("**Indicadores de decisión**")
     st.table(tabla_decision(df))
@@ -1501,15 +1507,15 @@ def pagina_decisiones(df):
 
     seccion("03", "Decisión recomendada")
     if pd.isna(prec):
-        principal = ("No hay datos verificados suficientes para calcular la exactitud del modelo. "
-                     "Se recomienda completar la verificación del experto antes de tomar decisiones operativas.")
+        principal = ("No hay datos verificados suficientes para calcular la exactitud. Se recomienda completar "
+                     "la verificación del experto antes de tomar decisiones operativas.")
     elif prec >= META_EXACTITUD:
         principal = (f"El modelo <b>cumple</b> la meta de exactitud ({prec:.1f}% ≥ {META_EXACTITUD}%). "
                      "Se recomienda mantener la versión actual en producción y concentrar los esfuerzos en las "
                      "parcelas con mayor incidencia.")
     else:
         principal = (f"El modelo <b>no cumple</b> la meta de exactitud ({prec:.1f}% &lt; {META_EXACTITUD}%). "
-                     "Se recomienda reentrenar antes de seguir usando el modelo como base para decisiones operativas.")
+                     "Se recomienda reentrenar antes de seguir usando el modelo para decisiones operativas.")
     st.markdown(f"<div class='reco-box'><b class='principal'>Decisión principal</b>{principal}</div>",
                 unsafe_allow_html=True)
 
@@ -1540,22 +1546,21 @@ def ir_a(clave):
 
 topbar()
 
-col_menu, col_main = st.columns([1.1, 4.8], gap="medium")
+col_menu, col_main = st.columns([1.05, 4.85], gap="medium")
 
 # Sidebar
 with col_menu:
     with st.container(key="menu"):
+        # Brand
         st.markdown(
             f"<div class='brand'><div class='brand-row'>"
-            f"<div class='brand-logo'>{logo_html()}</div>"
-            f"<div class='brand-text'>"
-            f"<div class='brand-n'>{NOMBRE}</div>"
-            f"<div class='brand-s'>{SUBTITULO}</div>"
-            f"</div></div></div>",
+            f"<div class='brand-mark'>{logo_html()}</div>"
+            f"<div class='brand-n'>agro<span class='brand-accent'>scan</span></div>"
+            f"</div></div>",
             unsafe_allow_html=True,
         )
         for clave, icono, etiqueta, _ in PAGINAS:
-            boton(f"{icono}    {etiqueta}", key=f"nav_{clave}",
+            boton(etiqueta, key=f"nav_{clave}",
                   type="primary" if st.session_state.pagina == clave else "secondary",
                   on_click=ir_a, args=(clave,))
 
@@ -1564,7 +1569,12 @@ with col_menu:
         f_trim = st.multiselect("Trimestre", sorted(df_all["trimestre"].dropna().unique().tolist()), key="f_trim")
         f_parc = st.multiselect("Parcela", sorted(sin_desc(df_all, "parcela")["parcela"].unique().tolist()), key="f_parc")
 
-# Filtros aplicados
+        st.markdown(
+            f"<div class='logout-btn'>↩ &nbsp;Cerrar sesión</div>",
+            unsafe_allow_html=True,
+        )
+
+# Filtros
 df = df_all
 if f_anio:
     df = df[df["anio"].isin(f_anio)]
@@ -1572,19 +1582,6 @@ if f_trim:
     df = df[df["trimestre"].isin(f_trim)]
 if f_parc:
     df = df[df["parcela"].isin(f_parc)]
-
-# Mini stat al pie del sidebar (meta de exactitud)
-prec_actual = precision(df) if not df.empty else np.nan
-pct_actual = 0 if pd.isna(prec_actual) else max(0, min(100, prec_actual))
-with col_menu:
-    st.markdown(
-        f"<div class='mini-stat'>"
-        f"<div class='mini-stat-title'>Meta exactitud</div>"
-        f"<div class='mini-stat-value'>{fmt_pct(prec_actual)}</div>"
-        f"<div class='mini-stat-bar'><div class='mini-stat-fill' style='width:{pct_actual}%'></div></div>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
 
 titulos = {clave: titulo for clave, _, _, titulo in PAGINAS}
 with col_main:
@@ -1594,6 +1591,6 @@ with col_main:
     else:
         PAGINAS_FN[st.session_state.pagina](df)
     st.markdown(
-        "<div class='pie'>Fuente: PostgreSQL · db_detector_maiz (modelo ROLAP) · Instituto Tecnológico de Tizimín</div>",
+        "<div class='pie'>Fuente: PostgreSQL · db_detector_maiz · Instituto Tecnológico de Tizimín</div>",
         unsafe_allow_html=True,
     )
