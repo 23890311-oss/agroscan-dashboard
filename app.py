@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Agri Cultur (inspirado en dashboard agrícola minimalista con hero images).
+Tema: Agri Cultur + hero images en cada página de requerimiento.
 
 Ejecutar:  python -m streamlit run app.py
 Datos:     carpeta data/ con los CSV exportados de PostgreSQL (db_detector_maiz).
@@ -37,14 +37,14 @@ ALTO = 340
 
 # (clave, icono, etiqueta, título)
 PAGINAS = [
-    ("inicio",     "◫", "Dashboard",           "Dashboard"),
-    ("r1",         "◈", "R1 · Exactitud",      "Exactitud del modelo"),
-    ("r2",         "◐", "R2 · Incidencia",     "Incidencia por parcela"),
-    ("r3",         "⚠", "R3 · Confianza baja", "Escaneos con confianza baja"),
-    ("r4",         "⊞", "R4 · Confusión",      "Matriz de confusión"),
-    ("r5",         "↗", "R5 · Evolución",      "Evolución temporal"),
-    ("r6",         "⚙", "R6 · Algoritmos",     "Algoritmos y versiones"),
-    ("decisiones", "◉", "Decisiones",          "Toma de decisiones"),
+    ("inicio",     "◫", "Dashboard",            "Dashboard"),
+    ("r1",         "◈", "R1 · Exactitud",       "Exactitud del modelo"),
+    ("r2",         "◐", "R2 · Incidencia",      "Incidencia por parcela"),
+    ("r3",         "⚠", "R3 · Confianza baja",  "Escaneos con confianza baja"),
+    ("r4",         "⊞", "R4 · Confusión",       "Matriz de confusión"),
+    ("r5",         "↗", "R5 · Evolución",       "Evolución temporal"),
+    ("r6",         "⚙", "R6 · Algoritmos",      "Algoritmos y versiones"),
+    ("decisiones", "◉", "Toma de decisiones",   "Toma de decisiones"),
 ]
 
 # ===== Paleta Agri Cultur =====
@@ -71,11 +71,14 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
 MIN_VERIF = 5
 
 # ===== Imágenes (Unsplash) =====
-IMG_HERO    = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
-IMG_CORN    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=600&auto=format&fit=crop&q=80"
-IMG_TOMATE  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=80"
-IMG_SEED    = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&auto=format&fit=crop&q=80"
-IMG_FIELD   = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format&fit=crop&q=80"
+IMG_HERO  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
+IMG_R1    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"
+IMG_R2    = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"
+IMG_R3    = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&auto=format&fit=crop&q=80"
+IMG_R4    = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"
+IMG_R5    = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"
+IMG_R6    = "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&auto=format&fit=crop&q=80"
+IMG_DEC   = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"
 
 
 # ===== DATOS =====
@@ -316,8 +319,7 @@ header[data-testid="stHeader"] { display: none; }
 }
 .topbar-search {
     flex: 1 1 auto; max-width: 460px;
-    background: transparent;
-    border: none;
+    background: transparent; border: none;
     border-bottom: 1px solid #ded9d0;
     padding: 0.45rem 0.2rem;
     display: flex; align-items: center; gap: 0.55rem;
@@ -365,19 +367,15 @@ header[data-testid="stHeader"] { display: none; }
     transition: all 0.15s ease;
 }
 .st-key-menu .stButton button p {
-    font-size: 0.87rem;
-    text-align: left;
-    color: #b8b8b8 !important;
-    font-weight: 500;
+    font-size: 0.87rem; text-align: left;
+    color: #b8b8b8 !important; font-weight: 500;
 }
 .st-key-menu button[kind="secondary"]:hover,
 .st-key-menu [data-testid="stBaseButton-secondary"]:hover {
     background: rgba(255,255,255,0.04) !important;
 }
 .st-key-menu button[kind="secondary"]:hover p,
-.st-key-menu [data-testid="stBaseButton-secondary"]:hover p {
-    color: #ffffff !important;
-}
+.st-key-menu [data-testid="stBaseButton-secondary"]:hover p { color: #ffffff !important; }
 .st-key-menu button[kind="primary"],
 .st-key-menu [data-testid="stBaseButton-primary"] {
     background: @@LIME@@ !important;
@@ -385,22 +383,17 @@ header[data-testid="stHeader"] { display: none; }
 }
 .st-key-menu button[kind="primary"] p,
 .st-key-menu [data-testid="stBaseButton-primary"] p {
-    color: @@TEXT@@ !important;
-    font-weight: 700;
+    color: @@TEXT@@ !important; font-weight: 700;
 }
 
 .st-key-menu :is(label, [data-testid="stWidgetLabel"] p) {
-    color: #6e6e6e !important;
-    font-size: 0.68rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
+    color: #6e6e6e !important; font-size: 0.68rem !important;
+    text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700;
 }
 .st-key-menu [data-baseweb="select"] > div {
     background: rgba(255,255,255,0.04) !important;
     border-color: rgba(255,255,255,0.08) !important;
-    color: #d8d8d8 !important;
-    border-radius: 10px !important;
+    color: #d8d8d8 !important; border-radius: 10px !important;
 }
 .st-key-menu [data-baseweb="select"] span { color: #d8d8d8 !important; }
 .st-key-menu [data-baseweb="tag"] {
@@ -408,11 +401,7 @@ header[data-testid="stHeader"] { display: none; }
     color: #d4f58c !important;
 }
 
-/* Brand */
-.brand {
-    padding: 0.2rem 0.4rem 1.4rem;
-    margin-bottom: 0.6rem;
-}
+.brand { padding: 0.2rem 0.4rem 1.4rem; margin-bottom: 0.6rem; }
 .brand-row { display: flex; align-items: center; gap: 0.6rem; }
 .brand-mark {
     width: 32px; height: 32px; border-radius: 8px;
@@ -425,22 +414,17 @@ header[data-testid="stHeader"] { display: none; }
 .brand-n { color: #ffffff; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
 .brand-n .brand-accent { color: @@LIME@@; font-weight: 800; }
 
-/* Logout */
 .logout-btn {
-    margin-top: 1.4rem;
-    padding: 0.8rem 0.9rem;
+    margin-top: 1.4rem; padding: 0.8rem 0.9rem;
     color: #6e6e6e; font-size: 0.82rem;
     border-top: 1px solid rgba(255,255,255,0.06);
-    display: flex; align-items: center; gap: 0.5rem;
-    font-weight: 500;
+    display: flex; align-items: center; gap: 0.5rem; font-weight: 500;
 }
-
 .filtros-t {
     color: #6e6e6e; font-size: 0.66rem;
     text-transform: uppercase; letter-spacing: 0.13em; font-weight: 700;
     padding-top: 1rem; margin-top: 0.8rem;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 0.4rem;
+    border-top: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.4rem;
 }
 
 /* ---------- PAGE TITLE ---------- */
@@ -452,9 +436,46 @@ header[data-testid="stHeader"] { display: none; }
 }
 .page-title {
     font-size: 1.5rem; color: @@TEXT@@;
-    font-weight: 700; line-height: 1.2;
-    letter-spacing: -0.015em;
+    font-weight: 700; line-height: 1.2; letter-spacing: -0.015em;
 }
+
+/* ---------- PAGE HERO (banner por página) ---------- */
+.page-hero {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    height: 170px;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    background: #2a4a2a;
+}
+.page-hero img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.page-hero-overlay {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 1.15rem 1.3rem 1rem;
+    background: linear-gradient(0deg, rgba(0,0,0,0.72), rgba(0,0,0,0.1) 60%, transparent);
+    color: #ffffff;
+}
+.page-hero-tag {
+    display: inline-block;
+    background: @@LIME@@;
+    color: @@TEXT@@;
+    font-size: 0.64rem;
+    font-weight: 800;
+    padding: 0.18rem 0.55rem;
+    border-radius: 6px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+}
+.page-hero-title {
+    color: #ffffff; font-size: 1.15rem;
+    font-weight: 700; margin-bottom: 0.15rem;
+    letter-spacing: -0.01em;
+}
+.page-hero-sub { color: rgba(255,255,255,0.9); font-size: 0.8rem; }
 
 /* ---------- METRIC CARD (top summary) ---------- */
 .metric-card {
@@ -463,40 +484,30 @@ header[data-testid="stHeader"] { display: none; }
     padding: 1.15rem 1.2rem 1rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
     margin-bottom: 0.6rem;
-    display: flex; flex-direction: column;
-    min-height: 110px;
+    display: flex; flex-direction: column; min-height: 110px;
 }
-.metric-label {
-    font-size: 0.72rem; color: @@MUTED@@;
-    font-weight: 500; margin-bottom: 0.55rem;
-}
+.metric-label { font-size: 0.72rem; color: @@MUTED@@; font-weight: 500; margin-bottom: 0.55rem; }
 .metric-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .metric-value {
     font-size: 1.85rem; font-weight: 800;
-    color: @@TEXT@@; line-height: 1;
-    letter-spacing: -0.03em;
+    color: @@TEXT@@; line-height: 1; letter-spacing: -0.03em;
 }
-.metric-unit {
-    font-size: 0.78rem; color: @@MUTED@@;
-    font-weight: 500; margin-left: 0.2rem;
-}
+.metric-unit { font-size: 0.78rem; color: @@MUTED@@; font-weight: 500; margin-left: 0.2rem; }
 .metric-badge {
     display: inline-flex; align-items: center; justify-content: center;
     width: 42px; height: 42px; border-radius: 50%;
-    font-size: 0.72rem; font-weight: 700;
-    flex-shrink: 0;
+    font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
 }
 .metric-badge.up { background: #e8f5d4; color: @@GREEN_DEEP@@; }
 .metric-badge.down { background: #fdf2e3; color: #b87333; }
 .metric-badge.flat { background: #f0f0f0; color: #666; }
 
-/* ---------- STATUS CARD (meta) ---------- */
+/* ---------- STATUS CARD ---------- */
 .status-card {
     background: #e6f2d8;
     border-radius: 18px;
     padding: 1.1rem 1.2rem;
-    margin-bottom: 0.6rem;
-    min-height: 110px;
+    margin-bottom: 0.6rem; min-height: 110px;
 }
 .status-label { font-size: 0.72rem; color: @@GREEN_DEEP@@; font-weight: 500; margin-bottom: 0.45rem; }
 .status-row { display: flex; align-items: center; gap: 0.9rem; }
@@ -504,7 +515,7 @@ header[data-testid="stHeader"] { display: none; }
 .status-num { font-size: 1.65rem; font-weight: 800; color: @@GREEN_DEEP@@; letter-spacing: -0.02em; }
 .status-sub { font-size: 0.72rem; color: @@GREEN_DEEP@@; opacity: 0.75; margin-top: 0.25rem; }
 
-/* ---------- HERO IMAGE ---------- */
+/* ---------- HERO (home) ---------- */
 .hero-card {
     position: relative;
     border-radius: 22px;
@@ -514,26 +525,19 @@ header[data-testid="stHeader"] { display: none; }
     margin-bottom: 0.6rem;
     background: #2a4a2a;
 }
-.hero-card img {
-    width: 100%; height: 100%; object-fit: cover;
-    display: block;
-}
+.hero-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hero-overlay {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 1.4rem 1.4rem 1.2rem;
     background: linear-gradient(0deg, rgba(0,0,0,0.65), transparent);
     color: #ffffff;
 }
-.hero-title {
-    color: #ffffff; font-size: 1.1rem; font-weight: 700;
-    margin-bottom: 0.2rem;
-}
+.hero-title { color: #ffffff; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.2rem; }
 .hero-sub { color: rgba(255,255,255,0.85); font-size: 0.78rem; }
 
-/* ---------- MINI CARD (fechas style) ---------- */
+/* ---------- MINI CARD ---------- */
 .mini-card {
-    background: #ffffff;
-    border-radius: 14px;
+    background: #ffffff; border-radius: 14px;
     padding: 0.85rem 0.9rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     margin-bottom: 0.55rem;
@@ -544,54 +548,35 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- PREDICT CARD ---------- */
 .predict-card {
-    background: #ffffff;
-    border-radius: 18px;
+    background: #ffffff; border-radius: 18px;
     padding: 1.1rem 1.2rem 1rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
     margin-bottom: 0.6rem;
 }
-.predict-title {
-    font-size: 0.75rem; font-weight: 700;
-    color: @@TEXT@@; margin-bottom: 0.9rem;
-    text-transform: none;
-}
+.predict-title { font-size: 0.75rem; font-weight: 700; color: @@TEXT@@; margin-bottom: 0.9rem; text-transform: none; }
 .pred-row { margin-bottom: 0.55rem; }
-.pred-line {
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 0.72rem; color: @@MUTED@@; margin-bottom: 0.3rem;
-}
+.pred-line { display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: @@MUTED@@; margin-bottom: 0.3rem; }
 .pred-name { color: @@TEXT@@; font-weight: 500; }
 .pred-val { color: @@TEXT@@; font-weight: 700; }
-.pred-bar {
-    height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;
-}
+.pred-bar { height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
 .pred-fill { height: 100%; border-radius: 3px; }
 .pred-fill.green { background: @@GREEN@@; }
 .pred-fill.lime { background: @@LIME@@; }
 .pred-fill.orange { background: #e8a44d; }
 
-/* ---------- HARVEST CARD (pie) ---------- */
-.harvest-card {
-    background: #e6f2d8;
-    border-radius: 18px;
-    padding: 1.1rem 1.2rem 1rem;
-    min-height: 100%;
-}
+/* ---------- HARVEST CARD ---------- */
+.harvest-card { background: #e6f2d8; border-radius: 18px; padding: 1.1rem 1.2rem 1rem; min-height: 100%; }
 .harvest-title { font-size: 0.75rem; font-weight: 700; color: @@GREEN_DEEP@@; margin-bottom: 0.9rem; }
 .harvest-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.9rem; }
 .harvest-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: @@GREEN_DEEP@@; }
 .harvest-row span:first-child { opacity: 0.75; }
 .harvest-row span:last-child { font-weight: 700; }
-.harvest-total { font-size: 1.5rem; font-weight: 800; color: @@GREEN_DEEP@@; letter-spacing: -0.02em; }
-.harvest-sub { font-size: 0.7rem; color: @@GREEN_DEEP@@; opacity: 0.7; }
 
-/* ---------- KPI (para R1-R6 y decisiones) ---------- */
+/* ---------- KPI ---------- */
 .kpi-card {
-    background: #ffffff;
-    border-radius: 18px;
+    background: #ffffff; border-radius: 18px;
     padding: 1.1rem 1.1rem 1rem;
-    text-align: center;
-    margin-bottom: 0.7rem;
+    text-align: center; margin-bottom: 0.7rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
     position: relative; overflow: hidden;
 }
@@ -601,8 +586,7 @@ header[data-testid="stHeader"] { display: none; }
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     font-size: 1.05rem; font-weight: 800;
-    color: @@GREEN_DEEP@@; white-space: nowrap;
-    letter-spacing: -0.02em;
+    color: @@GREEN_DEEP@@; white-space: nowrap; letter-spacing: -0.02em;
 }
 .kpi-value-big {
     font-size: 1.5rem; font-weight: 800; color: @@TEXT@@;
@@ -610,18 +594,13 @@ header[data-testid="stHeader"] { display: none; }
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     letter-spacing: -0.02em;
 }
-.kpi-title {
-    font-size: 0.7rem; color: @@MUTED@@;
-    font-weight: 500; margin-bottom: 0.15rem;
-}
+.kpi-title { font-size: 0.7rem; color: @@MUTED@@; font-weight: 500; margin-bottom: 0.15rem; }
 .kpi-sub { font-size: 0.72rem; color: #a3a3a3; }
 
 /* ---------- INFO CARD ---------- */
 .info-card {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 1.15rem 1.3rem;
-    height: 100%;
+    background: #ffffff; border-radius: 18px;
+    padding: 1.15rem 1.3rem; height: 100%;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
 }
 .info-card .lbl {
@@ -632,26 +611,18 @@ header[data-testid="stHeader"] { display: none; }
 .info-card .txt { color: @@TEXT@@; font-size: 0.9rem; line-height: 1.6; }
 
 /* ---------- SECTION ---------- */
-.section-h {
-    display: flex; align-items: baseline; gap: 0.7rem;
-    margin: 1.8rem 0 1rem 0;
-}
+.section-h { display: flex; align-items: baseline; gap: 0.7rem; margin: 1.8rem 0 1rem 0; }
 .section-n {
     font-size: 0.75rem; font-weight: 700;
-    color: @@GREEN@@; letter-spacing: 0.1em;
-    text-transform: uppercase;
+    color: @@GREEN@@; letter-spacing: 0.1em; text-transform: uppercase;
 }
-.section-t {
-    font-size: 1.05rem; color: @@TEXT@@;
-    font-weight: 700; letter-spacing: -0.01em;
-}
+.section-t { font-size: 1.05rem; color: @@TEXT@@; font-weight: 700; letter-spacing: -0.01em; }
 
 /* ---------- HALLAZGO ---------- */
 .hallazgo {
     background: #f7fbe9;
     border-left: 3px solid @@LIME_DEEP@@;
-    color: @@TEXT@@;
-    border-radius: 0 12px 12px 0;
+    color: @@TEXT@@; border-radius: 0 12px 12px 0;
     padding: 0.85rem 1.15rem; margin: 0.9rem 0;
     font-size: 0.88rem; line-height: 1.6;
 }
@@ -659,16 +630,11 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- CARD ---------- */
 .card {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 0.95rem 1.15rem;
-    margin-bottom: 0.65rem; min-height: 6rem;
+    background: #ffffff; border-radius: 14px;
+    padding: 0.95rem 1.15rem; margin-bottom: 0.65rem; min-height: 6rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.card-t {
-    color: @@TEXT@@; font-weight: 700;
-    font-size: 0.82rem; margin-bottom: 0.35rem;
-}
+.card-t { color: @@TEXT@@; font-weight: 700; font-size: 0.82rem; margin-bottom: 0.35rem; }
 .card-x { color: #555; font-size: 0.85rem; line-height: 1.55; }
 .card-x b { color: @@GREEN_DEEP@@; font-weight: 700; }
 
@@ -691,8 +657,7 @@ header[data-testid="stHeader"] { display: none; }
 .pie {
     color: @@MUTED@@; font-size: 0.7rem;
     margin-top: 1.4rem; padding-top: 0.8rem;
-    border-top: 1px solid #e8e5dc;
-    letter-spacing: 0.02em;
+    border-top: 1px solid #e8e5dc; letter-spacing: 0.02em;
 }
 
 /* ---------- FORM ---------- */
@@ -889,6 +854,20 @@ def encabezado(clave, titulo):
     )
 
 
+def page_hero(image_url, tag, title, subtitle):
+    """Banner con imagen al inicio de cada página."""
+    st.markdown(
+        f"<div class='page-hero'>"
+        f"<img src='{image_url}' alt='{escape(title)}'/>"
+        f"<div class='page-hero-overlay'>"
+        f"<div class='page-hero-tag'>{escape(tag)}</div>"
+        f"<div class='page-hero-title'>{escape(title)}</div>"
+        f"<div class='page-hero-sub'>{escape(subtitle)}</div>"
+        f"</div></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def seccion(num, titulo):
     st.markdown(
         f"<div class='section-h'><div class='section-n'>{num}</div>"
@@ -938,9 +917,7 @@ def pagina_inicio(df):
     inc = df.loc[es_incidencia(df), "cantidad_escaneos"].sum()
     inc_pct = inc / total * 100 if total else np.nan
     prec = precision(df)
-    conf = df["confianza_pct"].mean()
 
-    # Row 1: 3 metric cards + status
     c1, c2, c3, c4 = st.columns([1.15, 1.15, 1.15, 1], gap="medium")
     with c1:
         metric_card(c1, "Escaneos totales", fmt_int(total), "registros", "+12%", "up")
@@ -951,7 +928,6 @@ def pagina_inicio(df):
     with c3:
         metric_card(c3, "Incidencia", fmt_pct(inc_pct), "plaga + enfermedad", "-8%", "down")
     with c4:
-        pct_meta = 0 if pd.isna(prec) else max(0, min(100, prec))
         st.markdown(
             f"<div class='status-card'>"
             f"<div class='status-label'>Meta exactitud</div>"
@@ -963,7 +939,6 @@ def pagina_inicio(df):
             unsafe_allow_html=True,
         )
 
-    # Row 2: Hero + 4 mini cards
     col_hero, col_mini = st.columns([1.85, 1], gap="medium")
     with col_hero:
         st.markdown(
@@ -995,7 +970,6 @@ def pagina_inicio(df):
                     unsafe_allow_html=True,
                 )
 
-    # Row 3: Predictive analysis (3 columns of trends) + Pie
     col_pred, col_pie = st.columns([2, 1], gap="medium")
     with col_pred:
         st.markdown("<div style='font-size:0.78rem;font-weight:700;margin:0.4rem 0 0.7rem'>Análisis predictivo · últimos 3 periodos</div>",
@@ -1037,7 +1011,6 @@ def pagina_inicio(df):
                 f"<div class='harvest-row'><span>{escape(str(r['categoria_diag']))}</span><span>{fmt_int(r['escaneos'])}</span></div>"
                 for _, r in top3.iterrows()
             )
-            # Pie chart
             fig = px.pie(rcat, names="categoria_diag", values="escaneos",
                          color_discrete_sequence=[COLOR_GREEN, COLOR_LIME, COLOR_GREEN_DEEP, "#8fc99a"],
                          hole=0.6)
@@ -1047,7 +1020,6 @@ def pagina_inicio(df):
                 showlegend=False,
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             )
-            # Render harvest card with rows + pie
             st.markdown(
                 f"<div class='harvest-card'>"
                 f"<div class='harvest-title'>Distribución de diagnósticos</div>"
@@ -1057,7 +1029,6 @@ def pagina_inicio(df):
             )
             mostrar(fig, "pie_cat")
 
-    # Row 4: Charts
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
     st.markdown("<div style='font-size:0.78rem;font-weight:700;margin:0.4rem 0 0.7rem'>Resumen de actividad</div>",
                 unsafe_allow_html=True)
@@ -1091,6 +1062,9 @@ def pagina_r1(df):
     if d["acierto"].notna().sum() == 0:
         st.info(sin_datos("R1"))
         return
+    page_hero(IMG_R1, "R1 · Exactitud",
+              "Precisión diagnóstica del modelo",
+              "Comparación entre la clase real y el diagnóstico del detector a lo largo del tiempo")
     prec = precision(d)
     rc = resumen(d, "clase_real")
     mejor, peor = _mejor_peor(rc)
@@ -1153,6 +1127,9 @@ def pagina_r2(df):
     if d.empty:
         st.info(sin_datos("R2"))
         return
+    page_hero(IMG_R2, "R2 · Incidencia",
+              "Incidencia por parcela",
+              "Distribución de plagas y enfermedades en el campo, parcela por parcela")
     total = d["cantidad_escaneos"].sum()
     plaga = d.loc[es_plaga(d), "cantidad_escaneos"].sum()
     enf = d.loc[cat_es(d, ["enfermedad"]), "cantidad_escaneos"].sum()
@@ -1213,6 +1190,9 @@ def pagina_r3(df):
     if d.empty:
         st.info(sin_datos("R3"))
         return
+    page_hero(IMG_R3, "R3 · Confianza baja",
+              "Escaneos con confianza baja",
+              "Diagnósticos que requieren revisión manual del experto")
     baja = pct_baja(d)
     n_baja = (d["conf_baja"] * d["cantidad_escaneos"]).sum()
     rm = resumen(sin_desc(d, "modelo"), "modelo").dropna(subset=["baja_pct"])
@@ -1263,6 +1243,9 @@ def pagina_r4(df):
     if cm is None:
         st.info(sin_datos("R4"))
         return
+    page_hero(IMG_R4, "R4 · Matriz de confusión",
+              "Clase real vs. diagnóstico del modelo",
+              "Análisis detallado de aciertos y confusiones entre clases")
     total = cm.values.sum()
     ok = np.trace(cm.values)
     m = met.dropna(subset=["sensibilidad"])
@@ -1326,6 +1309,9 @@ NIVELES = {"Año": "anio", "Trimestre": "anio_trim", "Mes": "periodo", "Día": "
 
 
 def pagina_r5(df):
+    page_hero(IMG_R5, "R5 · Evolución",
+              "Evolución temporal de los diagnósticos",
+              "Tendencias de volumen, incidencia y confianza a lo largo del tiempo")
     nivel = st.radio("Nivel de detalle", list(NIVELES), index=2, horizontal=True, key="nivel_tiempo")
     col = NIVELES[nivel]
     por = resumen(df, col)
@@ -1386,6 +1372,9 @@ def pagina_r6(df):
     if d.empty:
         st.info(sin_datos("R6"))
         return
+    page_hero(IMG_R6, "R6 · Algoritmos",
+              "Algoritmos y versiones del modelo",
+              "Comparativa de desempeño entre algoritmos y versiones desplegadas")
     rv = resumen(d, "modelo")
     ra = resumen(sin_desc(d, "algoritmo"), "algoritmo")
     mejor_v, _ = _mejor_peor(rv)
@@ -1452,6 +1441,9 @@ def pagina_decisiones(df):
     if not hall:
         st.info(sin_datos("Toma de decisiones"))
         return
+    page_hero(IMG_DEC, "Toma de decisiones",
+              "Síntesis analítica para la acción",
+              "Planteamiento, análisis estadístico y decisión recomendada con base en evidencia")
 
     total = df["cantidad_escaneos"].sum()
     prec = precision(df)
@@ -1548,10 +1540,8 @@ topbar()
 
 col_menu, col_main = st.columns([1.05, 4.85], gap="medium")
 
-# Sidebar
 with col_menu:
     with st.container(key="menu"):
-        # Brand
         st.markdown(
             f"<div class='brand'><div class='brand-row'>"
             f"<div class='brand-mark'>{logo_html()}</div>"
@@ -1574,7 +1564,6 @@ with col_menu:
             unsafe_allow_html=True,
         )
 
-# Filtros
 df = df_all
 if f_anio:
     df = df[df["anio"].isin(f_anio)]
