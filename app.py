@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Dark Neon Purple (inspirado en dashboard de referencia).
+Tema: Green Fresh (inspirado en dashboard agrícola moderno).
 
 Ejecutar:  python -m streamlit run app.py
 Datos:     carpeta data/ con los CSV exportados de PostgreSQL (db_detector_maiz).
@@ -18,16 +18,16 @@ import streamlit as st
 
 st.set_page_config(
     page_title="AgroScan · Dashboard",
-    page_icon="◆",
+    page_icon="🌱",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # ===== CONFIGURACIÓN =====
 NOMBRE = "AgroScan"
-SUBTITULO = "Detector de gusano cogollero y roya del maíz"
+SUBTITULO = "Detector de plagas del maíz"
 BASE = Path(__file__).parent
-DATA_DIR = BASE / "data" if (BASE / "data").is_dir() else BASE
+DATA_DIR = BASE / "data"
 LOGO = BASE / "logo.png"
 
 UMBRAL = 80
@@ -37,9 +37,9 @@ ALTO = 360
 
 # (clave, icono, etiqueta, título de página)
 PAGINAS = [
-    ("inicio",     "⌂", "Inicio",                    "Inicio"),
+    ("inicio",     "◫", "Inicio",                    "Inicio"),
     ("r1",         "◈", "R1 · Exactitud",            "R1 · Exactitud por clase y mes"),
-    ("r2",         "◎", "R2 · Incidencia",           "R2 · Incidencia por parcela"),
+    ("r2",         "◐", "R2 · Incidencia",           "R2 · Incidencia por parcela"),
     ("r3",         "⚠", "R3 · Confianza baja",       "R3 · Escaneos con confianza baja"),
     ("r4",         "⊞", "R4 · Matriz de confusión",  "R4 · Matriz de confusión"),
     ("r5",         "↗", "R5 · Evolución",            "R5 · Evolución temporal"),
@@ -47,30 +47,28 @@ PAGINAS = [
     ("decisiones", "◉", "Toma de decisiones",        "Toma de decisiones"),
 ]
 
-# ===== Paleta dark neon =====
-COLOR_BG_1     = "#1a0a2e"
-COLOR_BG_2     = "#2d0d4f"
-COLOR_SIDEBAR  = "#150826"
-COLOR_CARD     = "#25163d"
-COLOR_CARD_2   = "#2d1b4a"
-COLOR_BORDER   = "rgba(168, 85, 247, 0.22)"
-COLOR_TEXT     = "#f0e6ff"
-COLOR_TEXTO    = COLOR_TEXT
-COLOR_MUTED    = "#8b7ba5"
+# ===== Paleta verde / blanco =====
+COLOR_BG          = "#eef2ec"
+COLOR_SIDEBAR     = "#1c3c2c"
+COLOR_SIDEBAR_DK  = "#122a1e"
+COLOR_CARD        = "#ffffff"
+COLOR_LIME        = "#c4f04a"
+COLOR_LIME_SOFT   = "#e4f5b0"
+COLOR_GREEN       = "#4a8b5c"
+COLOR_GREEN_DEEP  = "#1a3d2e"
+COLOR_GREEN_SOFT  = "#7bc99a"
+COLOR_WARM        = "#e8a44d"
+COLOR_TEXT        = "#1a2e1f"
+COLOR_TEXTO       = COLOR_TEXT
+COLOR_MUTED       = "#7a8a7f"
+COLOR_BORDER      = "#e3ead9"
 
-COLOR_CYAN     = "#00f0ff"
-COLOR_MAGENTA  = "#ff00c8"
-COLOR_GREEN    = "#00ff88"
-COLOR_YELLOW   = "#ffe14d"
-COLOR_PURPLE   = "#a855f7"
-COLOR_ORANGE   = "#ff7b00"
+COLOR_META        = COLOR_WARM
+COLOR_BARRA       = COLOR_GREEN_DEEP
+COLOR_LINEA       = COLOR_GREEN
 
-COLOR_META     = COLOR_YELLOW
-COLOR_BARRA    = COLOR_CYAN
-COLOR_LINEA    = COLOR_MAGENTA
-
-PALETA = [COLOR_CYAN, COLOR_MAGENTA, COLOR_GREEN, COLOR_YELLOW,
-          COLOR_PURPLE, COLOR_ORANGE, "#4d7cff", "#ff4d6d"]
+PALETA = ["#4a8b5c", "#c4f04a", "#1a3d2e", "#7bc99a",
+          "#8ab890", "#d4e89c", "#2c5e3d", "#e8a44d"]
 
 MIN_VERIF = 5
 
@@ -302,7 +300,7 @@ CSS = """
 header[data-testid="stHeader"] { display: none; }
 [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none; }
 .stApp {
-    background: radial-gradient(circle at 20% 0%, #2d0d4f 0%, @@BG1@@ 45%, #120720 100%);
+    background: @@BG@@;
     min-height: 100vh;
 }
 .block-container { padding: 1rem 1.6rem 1.6rem 1.6rem; max-width: 100%; }
@@ -310,211 +308,296 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- TOPBAR ---------- */
 .topbar {
-    display: flex; align-items: center; gap: 1.1rem;
-    background: linear-gradient(90deg, rgba(21,8,38,0.95), rgba(37,22,61,0.85));
-    border: 1px solid @@BORDER@@;
-    border-radius: 14px;
-    padding: 0.9rem 1.3rem;
-    margin-bottom: 1.4rem;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 0.75rem 1.1rem;
+    margin-bottom: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(26,61,46,0.04), 0 4px 12px rgba(26,61,46,0.06);
+    border: 1px solid #e8ede3;
 }
-.topbar-brand {
-    display: flex; align-items: center; gap: 0.9rem;
-    flex: 0 0 auto;
-    min-width: 260px;
-}
-.topbar-logo {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 54px; height: 54px; border-radius: 14px;
-    background: linear-gradient(135deg, @@CYAN@@, @@MAGENTA@@);
-    box-shadow: 0 0 22px rgba(0,240,255,0.5);
-    overflow: hidden;
-    flex-shrink: 0;
-}
-.topbar-logo img {
-    width: 40px; height: 40px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 4px rgba(0,0,0,0.3));
-}
-.topbar-logo .fallback-icon {
-    color: #1a0a2e; font-weight: 900; font-size: 1.6rem;
-    line-height: 1;
-}
-.topbar-name {
-    color: #ffffff; font-weight: 800;
-    font-size: 1.3rem; letter-spacing: 0.01em;
-    white-space: nowrap;
-}
-.topbar-name span { color: @@CYAN@@; font-weight: 900; }
 .topbar-search {
     flex: 1 1 auto;
-    min-width: 200px;
-    max-width: 560px;
-    display: flex; align-items: center; gap: 0.65rem;
-    background: rgba(0,0,0,0.35);
-    border: 1px solid rgba(255,255,255,0.08);
+    max-width: 420px;
+    background: #f5f7f0;
+    border: 1px solid #e8ede3;
     border-radius: 10px;
-    padding: 0.7rem 1rem;
-    color: @@MUTED@@; font-size: 0.9rem;
-    margin: 0 auto;
+    padding: 0.6rem 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: @@MUTED@@;
+    font-size: 0.88rem;
 }
-.topbar-search .search-icon { color: @@CYAN@@; font-size: 1.1rem; line-height: 1; }
+.topbar-search .search-icon {
+    color: @@GREEN@@;
+    font-size: 1.05rem;
+    line-height: 1;
+}
 .topbar-search .search-text {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.topbar-spacer { flex: 1; }
 .topbar-icons {
-    display: flex; align-items: center; gap: 0.55rem;
-    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .tb-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px;
-    background: rgba(168, 85, 247, 0.1);
-    border: 1px solid rgba(168, 85, 247, 0.22);
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
-    color: #b8a8d0; font-size: 1.1rem;
-    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7f0;
+    color: @@GREEN@@;
+    font-size: 1.05rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
 }
-.tb-btn:hover { background: rgba(0,240,255,0.12); color: @@CYAN@@; border-color: @@CYAN@@; }
+.tb-btn:hover { background: @@LIME_SOFT@@; color: @@GREEN_DEEP@@; }
+.tb-divider {
+    width: 1px;
+    height: 28px;
+    background: #e8ede3;
+    margin: 0 0.5rem;
+}
+.tb-user {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding-left: 0.4rem;
+}
 .tb-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, @@PURPLE@@, @@CYAN@@);
-    display: inline-flex; align-items: center; justify-content: center;
-    color: #1a0a2e; font-weight: 900; font-size: 1.1rem;
-    box-shadow: 0 0 14px rgba(168,85,247,0.5);
-    margin-left: 0.35rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, @@LIME@@, @@GREEN_SOFT@@);
+    color: @@GREEN_DEEP@@;
+    font-weight: 800;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(196,240,74,0.4);
+}
+.tb-user-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.tb-user-name {
+    color: @@GREEN_DEEP@@;
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+.tb-user-role {
+    color: @@MUTED@@;
+    font-size: 0.72rem;
+    margin-top: 0.1rem;
 }
 
 @media (max-width: 900px) {
     .topbar-search { display: none; }
-    .topbar-brand { min-width: auto; }
-    .topbar-name { font-size: 1.05rem; }
+    .tb-user-text { display: none; }
 }
 
 /* ---------- SIDEBAR ---------- */
 .st-key-menu {
-    background: linear-gradient(180deg, @@SIDEBAR@@ 0%, #1d0a35 100%);
-    border-radius: 14px;
-    padding: 1.2rem 0.9rem 1.4rem 0.9rem;
-    border: 1px solid @@BORDER@@;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    background: linear-gradient(180deg, @@SIDEBAR@@ 0%, @@SIDEBAR_DK@@ 100%);
+    border-radius: 22px;
+    padding: 1.3rem 1rem 1.3rem 1rem;
+    box-shadow: 0 10px 30px rgba(26,61,46,0.28);
+    border: 1px solid rgba(196,240,74,0.08);
 }
-.st-key-menu [data-testid="stVerticalBlock"] { gap: 0.25rem; }
+.st-key-menu [data-testid="stVerticalBlock"] { gap: 0.2rem; }
+
 .st-key-menu .stButton button {
-    width: 100%; min-height: 2.6rem; height: auto;
+    width: 100%; min-height: 2.55rem; height: auto;
     background: transparent !important;
     border: none !important;
-    border-left: 3px solid transparent !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     text-align: left !important;
     justify-content: flex-start !important;
     padding: 0.55rem 0.85rem !important;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
 }
 .st-key-menu .stButton button p {
     font-size: 0.86rem;
     text-align: left;
-    color: #b8a8d0 !important;
-}
-.st-key-menu button[kind="primary"],
-.st-key-menu [data-testid="stBaseButton-primary"] {
-    background: rgba(0, 240, 255, 0.09) !important;
-    border-left: 3px solid @@CYAN@@ !important;
-    box-shadow: inset 0 0 20px rgba(0,240,255,0.08) !important;
-}
-.st-key-menu button[kind="primary"] p,
-.st-key-menu [data-testid="stBaseButton-primary"] p {
-    color: @@CYAN@@ !important;
-    font-weight: 700;
+    color: #b8d4c2 !important;
+    font-weight: 500;
 }
 .st-key-menu button[kind="secondary"]:hover,
 .st-key-menu [data-testid="stBaseButton-secondary"]:hover {
-    background: rgba(168, 85, 247, 0.09) !important;
-    border-left: 3px solid @@PURPLE@@ !important;
+    background: rgba(196,240,74,0.08) !important;
 }
 .st-key-menu button[kind="secondary"]:hover p,
 .st-key-menu [data-testid="stBaseButton-secondary"]:hover p {
     color: #ffffff !important;
 }
+.st-key-menu button[kind="primary"],
+.st-key-menu [data-testid="stBaseButton-primary"] {
+    background: @@LIME@@ !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(196,240,74,0.3) !important;
+}
+.st-key-menu button[kind="primary"] p,
+.st-key-menu [data-testid="stBaseButton-primary"] p {
+    color: @@GREEN_DEEP@@ !important;
+    font-weight: 800;
+}
+
 .st-key-menu :is(label, [data-testid="stWidgetLabel"] p) {
-    color: #8b7ba5 !important;
-    font-size: 0.72rem !important;
+    color: #8fa89a !important;
+    font-size: 0.7rem !important;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
 }
+.st-key-menu [data-baseweb="select"] > div {
+    background: rgba(0,0,0,0.22) !important;
+    border-color: rgba(196,240,74,0.18) !important;
+    color: #e0edde !important;
+    border-radius: 8px !important;
+}
+.st-key-menu [data-baseweb="select"] span { color: #e0edde !important; }
+.st-key-menu [data-baseweb="tag"] {
+    background: rgba(196,240,74,0.2) !important;
+    color: #e0edde !important;
+}
 
 .brand {
-    text-align: center;
-    padding: 0 0 1rem 0;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+    padding: 0.3rem 0.3rem 0.9rem;
+    border-bottom: 1px solid rgba(196,240,74,0.12);
     margin-bottom: 0.9rem;
 }
-.brand img {
-    width: 84px; height: 84px;
+.brand-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(196,240,74,0.15);
+    border-radius: 11px;
+    padding: 6px;
+}
+.brand-logo img {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0 16px rgba(0,240,255,0.55));
+}
+.brand-text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.15;
 }
 .brand-n {
     color: #ffffff;
-    font-size: 1.2rem; font-weight: 800;
-    letter-spacing: 0.18em; text-transform: uppercase;
-    margin-top: 0.4rem;
-    background: linear-gradient(90deg, @@CYAN@@, @@MAGENTA@@);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 .brand-s {
-    color: #8b7ba5; font-size: 0.72rem; letter-spacing: 0.04em;
-    margin-top: 0.2rem; line-height: 1.3;
+    color: #8fa89a;
+    font-size: 0.68rem;
+    margin-top: 0.15rem;
 }
+
 .filtros-t {
-    color: #8b7ba5;
+    color: #8fa89a;
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-weight: 700;
-    border-top: 1px solid rgba(168, 85, 247, 0.15);
-    padding-top: 0.9rem;
-    margin-top: 0.6rem;
+    border-top: 1px solid rgba(196,240,74,0.12);
+    padding-top: 0.85rem;
+    margin-top: 0.7rem;
+    margin-bottom: 0.5rem;
 }
 
-/* ---------- BREADCRUMB ---------- */
-.breadcrumb-page {
-    display: flex; align-items: center; gap: 0.6rem;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-weight: 700;
-    color: #8b7ba5;
-    margin: 0 0 1.2rem 0;
+.mini-stat {
+    background: rgba(196,240,74,0.1);
+    border: 1px solid rgba(196,240,74,0.22);
+    border-radius: 12px;
+    padding: 0.85rem 0.9rem;
+    margin-top: 0.7rem;
 }
-.breadcrumb-page .bc-root { color: #b8a8d0; }
-.breadcrumb-page .bc-sep { color: @@MAGENTA@@; }
-.breadcrumb-page .bc-current { color: @@CYAN@@; text-shadow: 0 0 8px rgba(0,240,255,0.4); }
+.mini-stat-title {
+    color: #8fa89a;
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+.mini-stat-value {
+    color: @@LIME@@;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+}
+.mini-stat-bar {
+    height: 5px;
+    background: rgba(0,0,0,0.28);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.mini-stat-fill {
+    height: 100%;
+    background: @@LIME@@;
+    border-radius: 3px;
+}
+
+/* ---------- PAGE TITLE ---------- */
+.page-title-block {
+    margin: 0 0 1.4rem 0;
+}
+.page-crumb {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: @@MUTED@@;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+.page-title {
+    font-size: 1.65rem;
+    color: @@GREEN_DEEP@@;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
 
 /* ---------- KPI ---------- */
 .kpi-card {
-    position: relative;
-    background: linear-gradient(145deg, #2a1a4a 0%, #1f1235 100%);
-    border: 1px solid @@BORDER@@;
-    border-radius: 14px;
-    padding: 1rem 1rem 0.85rem;
+    background: #ffffff;
+    border: 1px solid #e8ede3;
+    border-radius: 18px;
+    padding: 1.2rem 1rem 1rem;
     text-align: center;
     margin-bottom: 0.8rem;
+    box-shadow: 0 1px 3px rgba(26,61,46,0.04), 0 4px 12px rgba(26,61,46,0.06);
+    position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
-}
-.kpi-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.9;
 }
 .kpi-gauge-wrap {
     position: relative;
-    width: 90px; height: 90px;
-    margin: 0 auto 0.5rem;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 0.6rem;
 }
 .kpi-gauge { width: 100%; height: 100%; display: block; }
 .kpi-number {
@@ -523,62 +606,53 @@ header[data-testid="stHeader"] { display: none; }
     transform: translate(-50%, -50%);
     font-size: 1.15rem;
     font-weight: 800;
-    color: var(--accent);
-    text-shadow: 0 0 14px var(--accent);
+    color: @@GREEN_DEEP@@;
     white-space: nowrap;
     letter-spacing: -0.02em;
 }
 .kpi-value-big {
-    font-size: 1.5rem;
+    font-size: 1.55rem;
     font-weight: 800;
-    color: var(--accent);
-    text-shadow: 0 0 14px var(--accent);
+    color: @@GREEN_DEEP@@;
     line-height: 1.15;
-    margin: 0.55rem 0 0.4rem;
+    margin: 0.9rem 0 0.55rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -0.02em;
 }
 .kpi-title {
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #b8a8d0;
+    color: @@MUTED@@;
     font-weight: 700;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.2rem;
 }
 .kpi-sub {
     font-size: 0.72rem;
-    color: #7a6b95;
+    color: #9caa9e;
 }
 
 /* ---------- INFO CARD ---------- */
 .info-card {
-    background: linear-gradient(145deg, #2a1a4a 0%, #1f1235 100%);
-    border: 1px solid @@BORDER@@;
-    border-radius: 12px;
-    padding: 1.1rem 1.3rem;
+    background: #ffffff;
+    border: 1px solid #e8ede3;
+    border-radius: 16px;
+    padding: 1.15rem 1.3rem;
     height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-.info-card::after {
-    content: ''; position: absolute; bottom: -40px; right: -40px;
-    width: 100px; height: 100px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,240,255,0.15), transparent 70%);
-    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(26,61,46,0.03), 0 4px 10px rgba(26,61,46,0.04);
 }
 .info-card .lbl {
     font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: @@MAGENTA@@;
+    letter-spacing: 0.13em;
+    color: @@GREEN@@;
     font-weight: 800;
     margin-bottom: 0.5rem;
-    text-shadow: 0 0 10px rgba(255,0,200,0.4);
 }
 .info-card .txt {
-    color: #e0d5f0;
+    color: @@TEXT@@;
     font-size: 0.9rem;
     line-height: 1.6;
 }
@@ -586,100 +660,112 @@ header[data-testid="stHeader"] { display: none; }
 /* ---------- SECTION ---------- */
 .section-h {
     display: flex;
-    align-items: baseline;
-    gap: 0.9rem;
-    border-bottom: 1px solid @@BORDER@@;
-    padding-bottom: 0.55rem;
-    margin: 1.8rem 0 1rem 0;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.8rem 0 1.1rem 0;
 }
 .section-n {
-    font-size: 1.3rem;
-    color: @@CYAN@@;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: @@LIME@@;
+    color: @@GREEN_DEEP@@;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 800;
-    line-height: 1;
-    text-shadow: 0 0 10px rgba(0,240,255,0.5);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(196,240,74,0.35);
 }
 .section-t {
-    font-size: 1.15rem;
-    color: #ffffff;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-size: 1.1rem;
+    color: @@GREEN_DEEP@@;
+    font-weight: 800;
+    letter-spacing: -0.005em;
 }
 
 /* ---------- HALLAZGO ---------- */
 .hallazgo {
-    background: rgba(0, 240, 255, 0.06);
-    border-left: 3px solid @@CYAN@@;
-    color: #e0d5f0;
-    border-radius: 0 8px 8px 0;
-    padding: 0.8rem 1.1rem;
-    margin: 0.8rem 0;
+    background: #f7fbe9;
+    border-left: 3px solid @@LIME@@;
+    color: @@TEXT@@;
+    border-radius: 0 12px 12px 0;
+    padding: 0.85rem 1.15rem;
+    margin: 0.9rem 0;
     font-size: 0.9rem;
     line-height: 1.6;
-    box-shadow: inset 0 0 30px rgba(0,240,255,0.03);
 }
-.hallazgo b { color: @@CYAN@@; text-shadow: 0 0 8px rgba(0,240,255,0.4); }
+.hallazgo b { color: @@GREEN_DEEP@@; font-weight: 800; }
 
 /* ---------- CARD ---------- */
 .card {
-    background: linear-gradient(145deg, #2a1a4a 0%, #1f1235 100%);
-    border: 1px solid @@BORDER@@;
-    border-left: 3px solid @@PURPLE@@;
-    border-radius: 10px;
-    padding: 0.9rem 1.1rem;
+    background: #ffffff;
+    border: 1px solid #e8ede3;
+    border-left: 3px solid @@GREEN@@;
+    border-radius: 12px;
+    padding: 0.95rem 1.15rem;
     margin-bottom: 0.7rem;
     min-height: 6rem;
+    box-shadow: 0 1px 3px rgba(26,61,46,0.03);
 }
 .card-t {
-    color: @@CYAN@@;
+    color: @@GREEN_DEEP@@;
     font-weight: 800;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
     margin-bottom: 0.4rem;
 }
 .card-x {
-    color: #d5c9e8;
-    font-size: 0.88rem;
+    color: @@TEXT@@;
+    font-size: 0.87rem;
     line-height: 1.55;
 }
-.card-x b { color: #ffffff; }
+.card-x b { color: @@GREEN_DEEP@@; font-weight: 800; }
 
 /* ---------- RECO ---------- */
 .reco-box {
-    background: rgba(0, 255, 136, 0.06);
+    background: #f0f7ee;
     border-left: 3px solid @@GREEN@@;
-    border-radius: 0 8px 8px 0;
-    padding: 0.8rem 1.1rem;
-    margin-bottom: 0.55rem;
-    color: #d5c9e8;
+    border-radius: 0 12px 12px 0;
+    padding: 0.85rem 1.15rem;
+    margin-bottom: 0.6rem;
+    color: @@TEXT@@;
     font-size: 0.9rem;
     line-height: 1.6;
-    box-shadow: inset 0 0 30px rgba(0,255,136,0.03);
 }
-.reco-box b { color: @@GREEN@@; text-shadow: 0 0 8px rgba(0,255,136,0.35); }
-.reco-box b.principal { color: @@CYAN@@; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+.reco-box b { color: @@GREEN_DEEP@@; font-weight: 800; }
+.reco-box b.principal {
+    color: @@GREEN_DEEP@@;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.78rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
 
 /* ---------- PIE ---------- */
 .pie {
-    color: #7a6b95;
+    color: @@MUTED@@;
     font-size: 0.72rem;
     margin-top: 1.4rem;
     padding-top: 0.8rem;
-    border-top: 1px solid rgba(168, 85, 247, 0.15);
-    letter-spacing: 0.03em;
+    border-top: 1px solid #e8ede3;
+    letter-spacing: 0.02em;
 }
 
 /* ---------- FORM ---------- */
 [data-testid="stMain"] [data-testid="stWidgetLabel"] p {
-    font-size: 0.75rem !important;
+    font-size: 0.73rem !important;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #8b7ba5 !important;
+    color: @@MUTED@@ !important;
     font-weight: 700;
 }
 [data-testid="stMain"] [data-testid="stRadio"] label p {
-    color: #d5c9e8 !important;
+    color: @@TEXT@@ !important;
     font-size: 0.85rem !important;
     text-transform: none;
     letter-spacing: 0;
@@ -688,91 +774,77 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- ST.TABLE ---------- */
 [data-testid="stTable"] table {
-    background: rgba(255,255,255,0.02);
-    border-radius: 10px;
+    background: #ffffff;
+    border-radius: 12px;
     overflow: hidden;
-    border: 1px solid @@BORDER@@;
+    border: 1px solid #e8ede3;
+    box-shadow: 0 1px 3px rgba(26,61,46,0.03);
 }
 [data-testid="stTable"] thead tr th {
-    background: rgba(168, 85, 247, 0.15) !important;
-    color: @@CYAN@@ !important;
+    background: #f5f8f0 !important;
+    color: @@GREEN_DEEP@@ !important;
     font-weight: 800 !important;
     text-transform: uppercase;
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
     letter-spacing: 0.08em;
-    padding: 0.65rem 0.85rem !important;
-    border-bottom: 1px solid @@BORDER@@ !important;
+    padding: 0.75rem 0.9rem !important;
+    border-bottom: 1px solid #e8ede3 !important;
     text-align: left !important;
 }
 [data-testid="stTable"] tbody tr td {
-    color: #e0d5f0 !important;
-    padding: 0.6rem 0.85rem !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-    font-size: 0.85rem !important;
-    background: transparent !important;
+    color: @@TEXT@@ !important;
+    padding: 0.7rem 0.9rem !important;
+    border-bottom: 1px solid #f0f3ec !important;
+    font-size: 0.86rem !important;
+    background: #ffffff !important;
 }
-[data-testid="stTable"] tbody tr:hover td { background: rgba(0,240,255,0.04) !important; }
+[data-testid="stTable"] tbody tr:hover td { background: #fafcf6 !important; }
 
 /* ---------- ALERT ---------- */
 [data-testid="stAlert"] {
-    background: rgba(168,85,247,0.08) !important;
-    border-left: 3px solid @@PURPLE@@ !important;
-    color: #d5c9e8 !important;
-    border-radius: 8px !important;
+    background: #f5f8f0 !important;
+    border-left: 3px solid @@GREEN@@ !important;
+    color: @@TEXT@@ !important;
+    border-radius: 12px !important;
 }
-[data-testid="stAlert"] p { color: #d5c9e8 !important; }
+[data-testid="stAlert"] p { color: @@TEXT@@ !important; }
 
 /* ---------- CAPTION ---------- */
 [data-testid="stMain"] [data-testid="stCaptionContainer"] p {
-    color: #7a6b95 !important;
+    color: @@MUTED@@ !important;
     font-size: 0.75rem !important;
 }
-[data-testid="stMain"] .stMarkdown p { color: #e0d5f0; }
-
-/* ---------- MULTISELECT ---------- */
-.st-key-menu [data-baseweb="select"] > div {
-    background: rgba(0,0,0,0.25) !important;
-    border-color: rgba(168,85,247,0.25) !important;
-    color: #d5c9e8 !important;
-}
+[data-testid="stMain"] .stMarkdown p { color: @@TEXT@@; }
 </style>
 """
 for token, valor in {
-    "@@BG1@@": COLOR_BG_1, "@@BG2@@": COLOR_BG_2,
+    "@@BG@@": COLOR_BG,
     "@@SIDEBAR@@": COLOR_SIDEBAR,
+    "@@SIDEBAR_DK@@": COLOR_SIDEBAR_DK,
+    "@@LIME@@": COLOR_LIME,
+    "@@LIME_SOFT@@": COLOR_LIME_SOFT,
+    "@@GREEN@@": COLOR_GREEN,
+    "@@GREEN_DEEP@@": COLOR_GREEN_DEEP,
+    "@@GREEN_SOFT@@": COLOR_GREEN_SOFT,
     "@@TEXT@@": COLOR_TEXT,
     "@@MUTED@@": COLOR_MUTED,
-    "@@BORDER@@": COLOR_BORDER,
-    "@@CYAN@@": COLOR_CYAN, "@@MAGENTA@@": COLOR_MAGENTA,
-    "@@GREEN@@": COLOR_GREEN, "@@YELLOW@@": COLOR_YELLOW,
-    "@@PURPLE@@": COLOR_PURPLE,
 }.items():
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 64 64">
-<circle cx="32" cy="32" r="26" fill="none" stroke="#00f0ff" stroke-width="2" opacity="0.9"/>
-<circle cx="32" cy="32" r="18" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.8"/>
-<circle cx="32" cy="32" r="10" fill="none" stroke="#ff00c8" stroke-width="1.2" opacity="0.9"/>
-<circle cx="32" cy="32" r="4" fill="#00f0ff"/>
+LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<circle cx="32" cy="32" r="30" fill="#c4f04a"/>
+<path d="M32 16 C 22 22, 18 32, 20 46 C 26 48, 34 44, 38 36 C 42 28, 42 20, 36 16 Z" fill="#1a3d2e"/>
+<path d="M32 20 L 32 42 M 26 30 L 32 34 M 38 28 L 32 32" stroke="#c4f04a" stroke-width="2" fill="none" stroke-linecap="round"/>
 </svg>"""
 
 
 def logo_html():
-    """Logo para sidebar: usa LOGO.png si existe, si no el SVG de anillos."""
     if LOGO.exists():
         datos, tipo = base64.b64encode(LOGO.read_bytes()).decode(), "image/png"
     else:
         datos, tipo = base64.b64encode(LOGO_SVG.encode()).decode(), "image/svg+xml"
     return f'<img src="data:{tipo};base64,{datos}" alt="logo">'
-
-
-def logo_topbar():
-    """Logo para el topbar: usa LOGO.png si existe, si no el glifo ◆."""
-    if LOGO.exists():
-        datos = base64.b64encode(LOGO.read_bytes()).decode()
-        return f'<img src="data:image/png;base64,{datos}" alt="logo">'
-    return '<span class="fallback-icon">◆</span>'
 
 
 # ----- utilidades de dibujo -----
@@ -795,24 +867,25 @@ def mostrar(fig, key):
 def estilo(fig, titulo, x="", y=""):
     fig.update_layout(
         title=dict(text=titulo, x=0, xanchor="left",
-                   font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Inter, sans-serif")),
+                   font=dict(size=14, color=COLOR_GREEN_DEEP,
+                             family="Inter, Segoe UI, sans-serif", weight="bold")),
         height=ALTO, margin=dict(l=60, r=20, t=55, b=55),
-        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color=COLOR_TEXT, family="Segoe UI, Inter, sans-serif", size=11),
+        plot_bgcolor="#ffffff", paper_bgcolor="#ffffff",
+        font=dict(color=COLOR_TEXT, family="Inter, Segoe UI, sans-serif", size=11),
         legend=dict(title=None, font=dict(size=10, color=COLOR_TEXT),
                     bgcolor="rgba(0,0,0,0)"),
-        hoverlabel=dict(bgcolor="#25163d", font=dict(color="#f0e6ff", size=11),
-                        bordercolor=COLOR_CYAN),
+        hoverlabel=dict(bgcolor="#ffffff", font=dict(color=COLOR_TEXT, size=11),
+                        bordercolor=COLOR_GREEN),
     )
     fig.update_xaxes(title_text=x, showgrid=False, automargin=True,
                      title_font=dict(size=11, color=COLOR_MUTED),
                      tickfont=dict(size=10, color=COLOR_MUTED),
-                     linecolor="rgba(255,255,255,0.15)")
-    fig.update_yaxes(title_text=y, gridcolor="rgba(255,255,255,0.06)", griddash="dot",
+                     linecolor="#e8ede3")
+    fig.update_yaxes(title_text=y, gridcolor="#f0f3ec", griddash="dot",
                      zeroline=False, automargin=True,
                      title_font=dict(size=11, color=COLOR_MUTED),
                      tickfont=dict(size=10, color=COLOR_MUTED),
-                     linecolor="rgba(255,255,255,0.15)")
+                     linecolor="#e8ede3")
     return fig
 
 
@@ -850,7 +923,7 @@ def _auto_pct(valor):
     return None
 
 
-def kpi(col, titulo, valor, sub="", color=COLOR_CYAN):
+def kpi(col, titulo, valor, sub="", color=COLOR_GREEN):
     pct = _auto_pct(valor)
     if pct is not None:
         pct_c = max(0.0, min(100.0, pct))
@@ -858,19 +931,18 @@ def kpi(col, titulo, valor, sub="", color=COLOR_CYAN):
         inner = f"""
         <div class='kpi-gauge-wrap'>
             <svg class='kpi-gauge' viewBox='0 0 100 100'>
-                <circle cx='50' cy='50' r='40' stroke='rgba(255,255,255,0.06)' stroke-width='9' fill='none'/>
+                <circle cx='50' cy='50' r='40' stroke='#f0f3ec' stroke-width='9' fill='none'/>
                 <circle cx='50' cy='50' r='40' stroke='{color}' stroke-width='9' fill='none'
                         stroke-dasharray='{dash} 251' stroke-linecap='round'
-                        transform='rotate(-90 50 50)'
-                        style='filter: drop-shadow(0 0 6px {color});'/>
+                        transform='rotate(-90 50 50)'/>
             </svg>
             <div class='kpi-number'>{valor}</div>
         </div>
         """
     else:
-        inner = f"<div class='kpi-value-big' style='color:{color};'>{valor}</div>"
+        inner = f"<div class='kpi-value-big'>{valor}</div>"
     col.markdown(
-        f"<div class='kpi-card' style='--accent:{color};'>{inner}"
+        f"<div class='kpi-card'>{inner}"
         f"<div class='kpi-title'>{titulo}</div>"
         f"<div class='kpi-sub'>{sub}</div></div>",
         unsafe_allow_html=True,
@@ -882,11 +954,11 @@ def hallazgo(texto):
 
 
 def encabezado(clave, titulo):
+    num = next((p[1] for p in PAGINAS if p[0] == clave), "00")
     st.markdown(
-        f"<div class='breadcrumb-page'>"
-        f"<span class='bc-root'>{NOMBRE}</span>"
-        f"<span class='bc-sep'>/</span>"
-        f"<span class='bc-current'>{escape(titulo)}</span>"
+        f"<div class='page-title-block'>"
+        f"<div class='page-crumb'>{NOMBRE} · Sección {num}</div>"
+        f"<div class='page-title'>{escape(titulo)}</div>"
         f"</div>",
         unsafe_allow_html=True,
     )
@@ -917,21 +989,25 @@ def barra_h(r, x, y, titulo, fmt, xt, color=None):
 # ===== TOPBAR =====
 def topbar():
     st.markdown(
-        f"""
+        """
         <div class="topbar">
-            <div class="topbar-brand">
-                <span class="topbar-logo">{logo_topbar()}</span>
-                <span class="topbar-name">{NOMBRE}<span> · </span>Dashboard</span>
-            </div>
             <div class="topbar-search">
                 <span class="search-icon">⌕</span>
                 <span class="search-text">Buscar parcela, clase o modelo…</span>
             </div>
+            <div class="topbar-spacer"></div>
             <div class="topbar-icons">
-                <span class="tb-btn">◉</span>
-                <span class="tb-btn">⚙</span>
-                <span class="tb-btn">✉</span>
-                <span class="tb-avatar">A</span>
+                <span class="tb-btn" title="Notificaciones">◔</span>
+                <span class="tb-btn" title="Configuración">⚙</span>
+                <span class="tb-btn" title="Mensajes">✉</span>
+                <span class="tb-divider"></span>
+                <div class="tb-user">
+                    <span class="tb-avatar">A</span>
+                    <div class="tb-user-text">
+                        <span class="tb-user-name">AgroScan</span>
+                        <span class="tb-user-role">Investigador · ITT</span>
+                    </div>
+                </div>
             </div>
         </div>
         """,
@@ -967,18 +1043,19 @@ def pagina_inicio(df):
             unsafe_allow_html=True,
         )
 
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:0.9rem'></div>", unsafe_allow_html=True)
 
     k = st.columns(4)
-    kpi(k[0], "Total de escaneos", fmt_int(total), f"{fmt_int(len(df))} registros", color=COLOR_CYAN)
-    kpi(k[1], "Exactitud del modelo", fmt_pct(precision(df)), f"meta {META_EXACTITUD}%", color=COLOR_MAGENTA)
-    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "reportada por el modelo", color=COLOR_GREEN)
-    kpi(k[3], "Plaga o enfermedad", fmt_int(inc), f"{inc / total * 100:.1f}% de los escaneos", color=COLOR_YELLOW)
+    kpi(k[0], "Total de escaneos", fmt_int(total), f"{fmt_int(len(df))} registros", color=COLOR_GREEN_DEEP)
+    kpi(k[1], "Exactitud del modelo", fmt_pct(precision(df)), f"meta {META_EXACTITUD}%", color=COLOR_GREEN)
+    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "reportada por el modelo", color=COLOR_LIME)
+    kpi(k[3], "Plaga o enfermedad", fmt_int(inc), f"{inc / total * 100:.1f}% de los escaneos", color=COLOR_GREEN_SOFT)
 
     por_mes = resumen(df, "periodo")
     fig1 = px.line(por_mes, x="periodo", y="escaneos", markers=True,
-                   color_discrete_sequence=[COLOR_LINEA])
-    fig1.update_traces(line_width=2.5, marker=dict(size=6, line=dict(width=0)))
+                   color_discrete_sequence=[COLOR_GREEN_DEEP])
+    fig1.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
+                                                    line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
     fig1.update_xaxes(type="category")
     por_cat = resumen(df, "categoria_diag").sort_values("escaneos", ascending=False)
     fig2 = px.bar(por_cat, x="categoria_diag", y="escaneos", text_auto=".0f",
@@ -1011,12 +1088,12 @@ def pagina_r1(df):
     k = st.columns(4)
     kpi(k[0], "Exactitud global", fmt_pct(prec),
         "✓ cumple la meta" if prec >= META_EXACTITUD else f"faltan {META_EXACTITUD - prec:.1f} pts",
-        color=COLOR_CYAN)
+        color=COLOR_GREEN)
     kpi(k[1], "Clase con mayor exactitud", escape(str(mejor["clase_real"])) if mejor is not None else "s/d",
-        fmt_pct(mejor["acierto_pct"]) if mejor is not None else "", color=COLOR_GREEN)
+        fmt_pct(mejor["acierto_pct"]) if mejor is not None else "", color=COLOR_LIME)
     kpi(k[2], "Clase con menor exactitud", escape(str(peor["clase_real"])) if peor is not None else "s/d",
-        fmt_pct(peor["acierto_pct"]) if peor is not None else "", color=COLOR_MAGENTA)
-    kpi(k[3], "Escaneos verificados", fmt_int(verif), "con clase real del experto", color=COLOR_PURPLE)
+        fmt_pct(peor["acierto_pct"]) if peor is not None else "", color=COLOR_GREEN_SOFT)
+    kpi(k[3], "Escaneos verificados", fmt_int(verif), "con clase real del experto", color=COLOR_GREEN_DEEP)
 
     items = []
     x = rc.dropna(subset=["acierto_pct"]).sort_values("acierto_pct", ascending=False)
@@ -1028,8 +1105,9 @@ def pagina_r1(df):
     if x.empty:
         items.append(("r1_mes", sin_datos("Exactitud por mes")))
     else:
-        fig = px.line(x, x="periodo", y="acierto_pct", markers=True, color_discrete_sequence=[COLOR_LINEA])
-        fig.update_traces(line_width=2.5, marker=dict(size=6))
+        fig = px.line(x, x="periodo", y="acierto_pct", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+        fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
+                                                      line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
         fig.update_xaxes(type="category")
         items.append(("r1_mes", meta_h(estilo(fig, "Exactitud por mes (%)", x="Mes", y="Exactitud %"))))
 
@@ -1076,10 +1154,10 @@ def pagina_r2(df):
     top = g.loc[g["incidencias"].idxmax()]
 
     k = st.columns(4)
-    kpi(k[0], "Plaga (cogollero)", fmt_int(plaga), f"{plaga / total * 100:.1f}% de los escaneos", color=COLOR_CYAN)
-    kpi(k[1], "Enfermedad (roya)", fmt_int(enf), f"{enf / total * 100:.1f}% de los escaneos", color=COLOR_MAGENTA)
-    kpi(k[2], "Incidencia total", f"{inc / total * 100:.1f}%", f"{fmt_int(inc)} escaneos", color=COLOR_YELLOW)
-    kpi(k[3], "Parcela más afectada", escape(str(top["parcela"])), f"{fmt_int(top['incidencias'])} incidencias", color=COLOR_ORANGE)
+    kpi(k[0], "Plaga (cogollero)", fmt_int(plaga), f"{plaga / total * 100:.1f}% de los escaneos", color=COLOR_GREEN)
+    kpi(k[1], "Enfermedad (roya)", fmt_int(enf), f"{enf / total * 100:.1f}% de los escaneos", color=COLOR_LIME)
+    kpi(k[2], "Incidencia total", f"{inc / total * 100:.1f}%", f"{fmt_int(inc)} escaneos", color=COLOR_GREEN_SOFT)
+    kpi(k[3], "Parcela más afectada", escape(str(top["parcela"])), f"{fmt_int(top['incidencias'])} incidencias", color=COLOR_GREEN_DEEP)
 
     items = []
     rcat = resumen(d, ["parcela", "categoria_diag"])
@@ -1107,7 +1185,7 @@ def pagina_r2(df):
         items.append(("r2_mes", estilo(fig, "Plaga y enfermedad por mes", x="Mes", y="Escaneos")))
         mat = di.pivot_table(index="parcela", columns="anio_trim", values="cantidad_escaneos", aggfunc="sum", fill_value=0)
         fig = px.imshow(mat, text_auto=True, aspect="auto",
-                        color_continuous_scale=[[0, "#1f1235"], [0.5, "#4a1d7d"], [1, "#00f0ff"]],
+                        color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
                         labels=dict(x="Trimestre", y="Parcela"))
         fig.update_coloraxes(showscale=False)
         fig.update_traces(textfont=dict(color=COLOR_TEXT))
@@ -1131,11 +1209,11 @@ def pagina_r3(df):
     peor = rm.loc[rm["baja_pct"].idxmax()] if not rm.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Umbral de confianza", f"{UMBRAL}%", "debajo = confianza baja", color=COLOR_YELLOW)
-    kpi(k[1], "Escaneos con confianza baja", fmt_int(n_baja), f"{baja:.1f}% de los escaneos", color=COLOR_ORANGE)
+    kpi(k[0], "Umbral de confianza", f"{UMBRAL}%", "debajo = confianza baja", color=COLOR_GREEN)
+    kpi(k[1], "Escaneos con confianza baja", fmt_int(n_baja), f"{baja:.1f}% de los escaneos", color=COLOR_LIME)
     kpi(k[2], "Versión con más casos", escape(str(peor["modelo"])) if peor is not None else "s/d",
-        fmt_pct(peor["baja_pct"]) if peor is not None else "", color=COLOR_MAGENTA)
-    kpi(k[3], "Confianza promedio", fmt_pct(d["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_CYAN)
+        fmt_pct(peor["baja_pct"]) if peor is not None else "", color=COLOR_GREEN_SOFT)
+    kpi(k[3], "Confianza promedio", fmt_pct(d["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_GREEN_DEEP)
 
     items = []
     if rm.empty:
@@ -1150,15 +1228,16 @@ def pagina_r3(df):
                      color_discrete_sequence=[COLOR_BARRA])
         fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=10))
         items.append(("r3_alg", estilo(fig, "Confianza baja por algoritmo (%)", y="% con confianza baja")))
-    fig = px.histogram(d, x="confianza_pct", nbins=20, color_discrete_sequence=[COLOR_MAGENTA])
+    fig = px.histogram(d, x="confianza_pct", nbins=20, color_discrete_sequence=[COLOR_GREEN])
     fig.update_traces(marker_line_width=0)
     fig.add_vline(x=UMBRAL, line_dash="dash", line_color=COLOR_META,
                   annotation_text=f"Umbral {UMBRAL}%",
                   annotation_font=dict(color=COLOR_META))
     items.append(("r3_hist", estilo(fig, "Distribución de la confianza", x="Confianza %", y="Escaneos")))
     pm = resumen(d, "periodo").dropna(subset=["baja_pct"])
-    fig = px.line(pm, x="periodo", y="baja_pct", markers=True, color_discrete_sequence=[COLOR_LINEA])
-    fig.update_traces(line_width=2.5, marker=dict(size=6))
+    fig = px.line(pm, x="periodo", y="baja_pct", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+    fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
+                                                  line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
     fig.update_xaxes(type="category")
     items.append(("r3_mes", estilo(fig, "Confianza baja por mes (%)", x="Mes", y="% con confianza baja")))
     rejilla(items)
@@ -1183,16 +1262,16 @@ def pagina_r4(df):
     peor = m.loc[m["sensibilidad"].idxmin()] if not m.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Escaneos comparados", fmt_int(total), "clase real y diagnóstico", color=COLOR_CYAN)
-    kpi(k[1], "Diagnósticos correctos", f"{ok / total * 100:.1f}%", f"{fmt_int(ok)} de {fmt_int(total)}", color=COLOR_GREEN)
+    kpi(k[0], "Escaneos comparados", fmt_int(total), "clase real y diagnóstico", color=COLOR_GREEN)
+    kpi(k[1], "Diagnósticos correctos", f"{ok / total * 100:.1f}%", f"{fmt_int(ok)} de {fmt_int(total)}", color=COLOR_LIME)
     kpi(k[2], "Mejor sensibilidad", escape(str(mejor["clase"])) if mejor is not None else "s/d",
-        fmt_pct(mejor["sensibilidad"]) if mejor is not None else "", color=COLOR_YELLOW)
+        fmt_pct(mejor["sensibilidad"]) if mejor is not None else "", color=COLOR_GREEN_SOFT)
     kpi(k[3], "Peor sensibilidad", escape(str(peor["clase"])) if peor is not None else "s/d",
-        fmt_pct(peor["sensibilidad"]) if peor is not None else "", color=COLOR_MAGENTA)
+        fmt_pct(peor["sensibilidad"]) if peor is not None else "", color=COLOR_GREEN_DEEP)
 
     items = []
     fig = px.imshow(cm, text_auto=True, aspect="auto",
-                    color_continuous_scale=[[0, "#1f1235"], [0.5, "#4a1d7d"], [1, "#00f0ff"]],
+                    color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
                     labels=dict(x="Diagnóstico del modelo", y="Clase real"))
     fig.update_coloraxes(showscale=False)
     fig.update_traces(textfont=dict(color=COLOR_TEXT))
@@ -1205,7 +1284,7 @@ def pagina_r4(df):
         mc = d.pivot_table(index="categoria_real", columns="categoria_diag", values="cantidad_escaneos",
                            aggfunc="sum", fill_value=0)
         fig = px.imshow(mc, text_auto=True, aspect="auto",
-                        color_continuous_scale=[[0, "#1f1235"], [0.5, "#4a1d7d"], [1, "#00f0ff"]],
+                        color_continuous_scale=[[0, "#f0f7e8"], [0.3, "#d9f58c"], [0.6, "#7bc99a"], [1, "#1a3d2e"]],
                         labels=dict(x="Categoría diagnosticada", y="Categoría real"))
         fig.update_coloraxes(showscale=False)
         fig.update_traces(textfont=dict(color=COLOR_TEXT))
@@ -1214,7 +1293,7 @@ def pagina_r4(df):
     largo = met.melt(id_vars="clase", value_vars=["precision", "sensibilidad"], var_name="métrica", value_name="valor")
     largo["métrica"] = largo["métrica"].map({"precision": "Precisión", "sensibilidad": "Sensibilidad"})
     fig = px.bar(largo, x="clase", y="valor", color="métrica", barmode="group", text_auto=".0f",
-                 color_discrete_sequence=[COLOR_CYAN, COLOR_MAGENTA])
+                 color_discrete_sequence=[COLOR_GREEN_DEEP, COLOR_LIME])
     fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=10))
     items.append(("r4_met", estilo(fig, "Precisión y sensibilidad por clase (%)", y="%")))
 
@@ -1247,15 +1326,16 @@ def pagina_r5(df):
     pico_inc = di.groupby(col)["cantidad_escaneos"].sum() if not di.empty else None
 
     k = st.columns(4)
-    kpi(k[0], "Escaneos", fmt_int(df["cantidad_escaneos"].sum()), f"nivel: {nivel.lower()}", color=COLOR_CYAN)
-    kpi(k[1], f"{nivel} con más escaneos", escape(str(pico[col])), f"{fmt_int(pico['escaneos'])} escaneos", color=COLOR_MAGENTA)
-    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_GREEN)
+    kpi(k[0], "Escaneos", fmt_int(df["cantidad_escaneos"].sum()), f"nivel: {nivel.lower()}", color=COLOR_GREEN)
+    kpi(k[1], f"{nivel} con más escaneos", escape(str(pico[col])), f"{fmt_int(pico['escaneos'])} escaneos", color=COLOR_LIME)
+    kpi(k[2], "Confianza promedio", fmt_pct(df["confianza_pct"].mean()), "de todos los escaneos", color=COLOR_GREEN_SOFT)
     kpi(k[3], f"Pico de incidencia", escape(str(pico_inc.idxmax())) if pico_inc is not None else "s/d",
-        f"{fmt_int(pico_inc.max())} casos" if pico_inc is not None else "", color=COLOR_YELLOW)
+        f"{fmt_int(pico_inc.max())} casos" if pico_inc is not None else "", color=COLOR_GREEN_DEEP)
 
     items = []
-    fig = px.line(por, x=col, y="escaneos", markers=True, color_discrete_sequence=[COLOR_LINEA])
-    fig.update_traces(line_width=2.5, marker=dict(size=6))
+    fig = px.line(por, x=col, y="escaneos", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+    fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
+                                                  line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
     fig.update_xaxes(type="category")
     items.append(("r5_line", estilo(fig, f"Escaneos por {nivel.lower()}", x=nivel, y="Escaneos")))
 
@@ -1269,8 +1349,9 @@ def pagina_r5(df):
     if pc.empty:
         items.append(("r5_conf", sin_datos("Confianza promedio")))
     else:
-        fig = px.line(pc, x=col, y="confianza", markers=True, color_discrete_sequence=[COLOR_CYAN])
-        fig.update_traces(line_width=2.5, marker=dict(size=6))
+        fig = px.line(pc, x=col, y="confianza", markers=True, color_discrete_sequence=[COLOR_GREEN_DEEP])
+        fig.update_traces(line_width=2.8, marker=dict(size=7, color=COLOR_LIME,
+                                                      line=dict(color=COLOR_GREEN_DEEP, width=1.5)))
         fig.update_xaxes(type="category")
         items.append(("r5_conf", estilo(fig, f"Confianza promedio por {nivel.lower()} (%)", x=nivel, y="Confianza %")))
 
@@ -1283,7 +1364,7 @@ def pagina_r5(df):
                          color_discrete_sequence=PALETA)
         fig.update_traces(textinfo="label+value",
                           textfont=dict(color="#ffffff", size=12),
-                          marker=dict(line=dict(color="#120720", width=1)))
+                          marker=dict(line=dict(color="#ffffff", width=1)))
         items.append(("r5_tree", estilo(fig, "Año → trimestre → mes")))
     rejilla(items)
 
@@ -1304,12 +1385,12 @@ def pagina_r6(df):
 
     k = st.columns(4)
     kpi(k[0], "Algoritmos", str(ra["algoritmo"].nunique()),
-        ", ".join(escape(str(a)) for a in ra["algoritmo"].head(3)), color=COLOR_CYAN)
-    kpi(k[1], "Versiones", str(rv["modelo"].nunique()), "sin contar «desconocido»", color=COLOR_PURPLE)
+        ", ".join(escape(str(a)) for a in ra["algoritmo"].head(3)), color=COLOR_GREEN)
+    kpi(k[1], "Versiones", str(rv["modelo"].nunique()), "sin contar «desconocido»", color=COLOR_LIME)
     kpi(k[2], "Mejor algoritmo", escape(str(mejor_a["algoritmo"])) if mejor_a is not None else "s/d",
-        fmt_pct(mejor_a["acierto_pct"]) if mejor_a is not None else "", color=COLOR_GREEN)
+        fmt_pct(mejor_a["acierto_pct"]) if mejor_a is not None else "", color=COLOR_GREEN_SOFT)
     kpi(k[3], "Mejor versión", escape(str(mejor_v["modelo"])) if mejor_v is not None else "s/d",
-        fmt_pct(mejor_v["acierto_pct"]) if mejor_v is not None else "", color=COLOR_MAGENTA)
+        fmt_pct(mejor_v["acierto_pct"]) if mejor_v is not None else "", color=COLOR_GREEN_DEEP)
 
     items = []
     rap = ra.dropna(subset=["acierto_pct"])
@@ -1322,7 +1403,7 @@ def pagina_r6(df):
                                                   "confianza": "Confianza promedio",
                                                   "baja_pct": "Confianza baja"})
         fig = px.bar(largo, x="algoritmo", y="valor", color="métrica", barmode="group", text_auto=".0f",
-                     color_discrete_sequence=[COLOR_CYAN, COLOR_MAGENTA, COLOR_ORANGE])
+                     color_discrete_sequence=[COLOR_GREEN_DEEP, COLOR_LIME, COLOR_WARM])
         fig.update_traces(marker_line_width=0, textfont=dict(color=COLOR_TEXT, size=9))
         items.append(("r6_alg", estilo(fig, "Algoritmos: exactitud, confianza y confianza baja (%)", y="%")))
 
@@ -1339,15 +1420,15 @@ def pagina_r6(df):
         items.append(("r6_sc", sin_datos("Confianza vs. exactitud")))
     else:
         fig = px.scatter(rs, x="confianza", y="acierto_pct", size="escaneos", hover_name="modelo",
-                         color_discrete_sequence=[COLOR_CYAN])
-        fig.update_traces(marker=dict(line=dict(width=1, color="#ffffff")))
+                         color_discrete_sequence=[COLOR_GREEN_DEEP])
+        fig.update_traces(marker=dict(line=dict(width=2, color=COLOR_LIME)))
         items.append(("r6_sc", estilo(fig, "Confianza vs. exactitud por versión", x="Confianza %", y="Exactitud %")))
 
     rt = rv[rv["escaneos"] > 0]
     fig = px.treemap(rt, path=["modelo"], values="escaneos", color="modelo", color_discrete_sequence=PALETA)
     fig.update_traces(textinfo="label+value", textposition="top left",
                       textfont=dict(color="#ffffff", size=12),
-                      marker=dict(line=dict(color="#120720", width=1)))
+                      marker=dict(line=dict(color="#ffffff", width=1)))
     items.append(("r6_tree", estilo(fig, "Escaneos por versión")))
     rejilla(items)
 
@@ -1399,11 +1480,11 @@ def pagina_decisiones(df):
 
     seccion("02", "Análisis estadístico")
     k = st.columns(4)
-    kpi(k[0], "Exactitud global", fmt_pct(prec), f"meta ≥ {META_EXACTITUD}%", color=COLOR_CYAN)
+    kpi(k[0], "Exactitud global", fmt_pct(prec), f"meta ≥ {META_EXACTITUD}%", color=COLOR_GREEN)
     kpi(k[1], "Incidencia (plaga + enfermedad)", fmt_pct(inc_pct),
-        f"{fmt_int(inc)} de {fmt_int(total)}", color=COLOR_YELLOW)
-    kpi(k[2], "Escaneos con confianza baja", fmt_pct(baja), f"umbral < {UMBRAL}%", color=COLOR_MAGENTA)
-    kpi(k[3], "Escaneos sin verificar", fmt_pct(sin_verif), "sin clase real del experto", color=COLOR_ORANGE)
+        f"{fmt_int(inc)} de {fmt_int(total)}", color=COLOR_LIME)
+    kpi(k[2], "Escaneos con confianza baja", fmt_pct(baja), f"umbral < {UMBRAL}%", color=COLOR_GREEN_SOFT)
+    kpi(k[3], "Escaneos sin verificar", fmt_pct(sin_verif), "sin clase real del experto", color=COLOR_GREEN_DEEP)
 
     st.markdown("**Indicadores de decisión**")
     st.table(tabla_decision(df))
@@ -1429,7 +1510,7 @@ def pagina_decisiones(df):
     else:
         principal = (f"El modelo <b>no cumple</b> la meta de exactitud ({prec:.1f}% &lt; {META_EXACTITUD}%). "
                      "Se recomienda reentrenar antes de seguir usando el modelo como base para decisiones operativas.")
-    st.markdown(f"<div class='reco-box'><b class='principal'>Decisión principal.</b> {principal}</div>",
+    st.markdown(f"<div class='reco-box'><b class='principal'>Decisión principal</b>{principal}</div>",
                 unsafe_allow_html=True)
 
     if recs:
@@ -1457,7 +1538,6 @@ def ir_a(clave):
     st.session_state.pagina = clave
 
 
-# Topbar full-width
 topbar()
 
 col_menu, col_main = st.columns([1.1, 4.8], gap="medium")
@@ -1466,20 +1546,25 @@ col_menu, col_main = st.columns([1.1, 4.8], gap="medium")
 with col_menu:
     with st.container(key="menu"):
         st.markdown(
-            f"<div class='brand'>{logo_html()}"
+            f"<div class='brand'><div class='brand-row'>"
+            f"<div class='brand-logo'>{logo_html()}</div>"
+            f"<div class='brand-text'>"
             f"<div class='brand-n'>{NOMBRE}</div>"
-            f"<div class='brand-s'>{SUBTITULO}</div></div>",
+            f"<div class='brand-s'>{SUBTITULO}</div>"
+            f"</div></div></div>",
             unsafe_allow_html=True,
         )
         for clave, icono, etiqueta, _ in PAGINAS:
             boton(f"{icono}    {etiqueta}", key=f"nav_{clave}",
                   type="primary" if st.session_state.pagina == clave else "secondary",
                   on_click=ir_a, args=(clave,))
+
         st.markdown("<div class='filtros-t'>Filtros</div>", unsafe_allow_html=True)
         f_anio = st.multiselect("Año", sorted(df_all["anio"].dropna().unique().tolist()), key="f_anio")
         f_trim = st.multiselect("Trimestre", sorted(df_all["trimestre"].dropna().unique().tolist()), key="f_trim")
         f_parc = st.multiselect("Parcela", sorted(sin_desc(df_all, "parcela")["parcela"].unique().tolist()), key="f_parc")
 
+# Filtros aplicados
 df = df_all
 if f_anio:
     df = df[df["anio"].isin(f_anio)]
@@ -1487,6 +1572,19 @@ if f_trim:
     df = df[df["trimestre"].isin(f_trim)]
 if f_parc:
     df = df[df["parcela"].isin(f_parc)]
+
+# Mini stat al pie del sidebar (meta de exactitud)
+prec_actual = precision(df) if not df.empty else np.nan
+pct_actual = 0 if pd.isna(prec_actual) else max(0, min(100, prec_actual))
+with col_menu:
+    st.markdown(
+        f"<div class='mini-stat'>"
+        f"<div class='mini-stat-title'>Meta exactitud</div>"
+        f"<div class='mini-stat-value'>{fmt_pct(prec_actual)}</div>"
+        f"<div class='mini-stat-bar'><div class='mini-stat-fill' style='width:{pct_actual}%'></div></div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
 titulos = {clave: titulo for clave, _, _, titulo in PAGINAS}
 with col_main:
