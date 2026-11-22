@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Agri Cultur + hero images en cada página de requerimiento.
+Tema: Agri Cultur + imágenes de maíz/tomate + búsqueda y notificaciones funcionales.
 
 Ejecutar:  python -m streamlit run app.py
 Datos:     carpeta data/ con los CSV exportados de PostgreSQL (db_detector_maiz).
@@ -25,7 +25,7 @@ st.set_page_config(
 
 # ===== CONFIGURACIÓN =====
 NOMBRE = "AgroScan"
-SUBTITULO = "Detector de plagas del maíz"
+SUBTITULO = "Detección de gusano cogollero, roya del maíz y madurez del tomate"
 BASE = Path(__file__).parent
 DATA_DIR = BASE / "data" if (BASE / "data").is_dir() else BASE
 LOGO = BASE / "logo.png"
@@ -50,16 +50,12 @@ PAGINAS = [
 # ===== Paleta Agri Cultur =====
 COLOR_BG          = "#f4f2ec"
 COLOR_SIDEBAR     = "#242424"
-COLOR_SIDEBAR_2   = "#1a1a1a"
 COLOR_LIME        = "#d4f58c"
 COLOR_LIME_DEEP   = "#b8e86f"
 COLOR_GREEN       = "#2d7a3a"
 COLOR_GREEN_DEEP  = "#1a4d26"
 COLOR_TEXT        = "#1a1a1a"
-COLOR_TEXTO       = COLOR_TEXT
 COLOR_MUTED       = "#8a8a8a"
-COLOR_BORDER      = "#eae7e0"
-COLOR_CARD        = "#ffffff"
 
 COLOR_META        = "#e8a44d"
 COLOR_BARRA       = COLOR_GREEN
@@ -70,15 +66,26 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
 
 MIN_VERIF = 5
 
-# ===== Imágenes (Unsplash) =====
-IMG_HERO  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
-IMG_R1    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"
-IMG_R2    = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"
-IMG_R3    = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&auto=format&fit=crop&q=80"
-IMG_R4    = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"
-IMG_R5    = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"
-IMG_R6    = "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&auto=format&fit=crop&q=80"
-IMG_DEC   = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"
+# ===== Imágenes acordes al proyecto (Unsplash) =====
+# Maíz: campo, hoja, mazorca
+IMG_MAIZ_CAMPO   = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
+IMG_MAIZ_HOJA    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"
+IMG_MAIZ_MAZORCA = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"  # misma que hoja, pero sirve
+# Tomate: madurez, planta, fruto
+IMG_TOMATE_MADUREZ = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"
+IMG_TOMATE_PLANTA  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"
+# Agricultor / campo genérico
+IMG_AGRICULTOR     = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"
+
+# Asignación por página
+IMG_HERO = IMG_MAIZ_CAMPO
+IMG_R1   = IMG_MAIZ_HOJA
+IMG_R2   = IMG_TOMATE_MADUREZ
+IMG_R3   = IMG_MAIZ_CAMPO
+IMG_R4   = IMG_MAIZ_MAZORCA
+IMG_R5   = IMG_MAIZ_CAMPO
+IMG_R6   = IMG_TOMATE_PLANTA
+IMG_DEC  = IMG_AGRICULTOR
 
 
 # ===== DATOS =====
@@ -311,38 +318,41 @@ header[data-testid="stHeader"] { display: none; }
 .block-container { padding: 1rem 1.6rem 1.6rem 1.6rem; max-width: 100%; }
 [data-testid="stMain"] :is(h1, h2, h3, h4, h5, p, label, li) { color: @@TEXT@@; }
 
-/* ---------- TOPBAR ---------- */
-.topbar {
-    display: flex; align-items: center; gap: 1rem;
+/* ---------- TOPBAR NATIVA (Streamlit) ---------- */
+.topbar-native {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     padding: 0.3rem 0.3rem 1.1rem 0.3rem;
     margin-bottom: 1rem;
 }
-.topbar-search {
-    flex: 1 1 auto; max-width: 460px;
-    background: transparent; border: none;
-    border-bottom: 1px solid #ded9d0;
-    padding: 0.45rem 0.2rem;
-    display: flex; align-items: center; gap: 0.55rem;
-    color: @@MUTED@@; font-size: 0.86rem;
+.topbar-native .stTextInput > div > div > input {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid #ded9d0 !important;
+    border-radius: 0 !important;
+    padding: 0.45rem 0.2rem !important;
+    font-size: 0.86rem !important;
+    color: @@TEXT@@ !important;
+    box-shadow: none !important;
 }
-.topbar-search .search-icon { color: @@MUTED@@; font-size: 1rem; line-height: 1; }
-.topbar-spacer { flex: 1; }
-.topbar-icons { display: flex; align-items: center; gap: 0.55rem; }
-.tb-btn {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: #ffffff; color: @@GREEN_DEEP@@;
-    font-size: 1rem; transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+.topbar-native .stTextInput > div > div > input::placeholder {
+    color: @@MUTED@@ !important;
 }
-.tb-btn:hover { background: @@LIME@@; }
-.tb-avatar {
-    width: 42px; height: 42px; border-radius: 50%;
-    background: #ffffff;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    margin-left: 0.35rem;
+.topbar-native .stButton > button {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    font-size: 1rem !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+    color: @@GREEN_DEEP@@ !important;
+}
+.topbar-native .stButton > button:hover {
+    background: @@LIME@@ !important;
 }
 
 /* ---------- SIDEBAR ---------- */
@@ -439,7 +449,7 @@ header[data-testid="stHeader"] { display: none; }
     font-weight: 700; line-height: 1.2; letter-spacing: -0.015em;
 }
 
-/* ---------- PAGE HERO (banner por página) ---------- */
+/* ---------- PAGE HERO ---------- */
 .page-hero {
     position: relative;
     border-radius: 18px;
@@ -477,7 +487,7 @@ header[data-testid="stHeader"] { display: none; }
 }
 .page-hero-sub { color: rgba(255,255,255,0.9); font-size: 0.8rem; }
 
-/* ---------- METRIC CARD (top summary) ---------- */
+/* ---------- METRIC CARD ---------- */
 .metric-card {
     background: #ffffff;
     border-radius: 18px;
@@ -890,25 +900,27 @@ def barra_h(r, x, y, titulo, fmt, xt, color=None):
     return estilo(fig, titulo, x=xt)
 
 
-# ===== TOPBAR =====
-def topbar():
-    st.markdown(
-        """
-        <div class="topbar">
-            <div class="topbar-search">
-                <span class="search-icon">⌕</span>
-                <span>Buscar cultivos, parcelas o modelos…</span>
-            </div>
-            <div class="topbar-spacer"></div>
-            <div class="topbar-icons">
-                <span class="tb-btn">🔔</span>
-                <span class="tb-btn">⚙</span>
-                <span class="tb-avatar">👤</span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+# ===== TOPBAR NATIVA (funcional) =====
+def topbar_nativa():
+    """Barra superior con búsqueda real y botones funcionales usando columnas."""
+    col_buscar, col_iconos = st.columns([3, 1], gap="medium")
+    with col_buscar:
+        st.text_input(
+            "Buscar",
+            key="busqueda_global",
+            placeholder="Buscar cultivos, parcelas o modelos…",
+            label_visibility="collapsed",
+        )
+    with col_iconos:
+        c1, c2, c3 = st.columns(3, gap="small")
+        with c1:
+            if st.button("🔔", key="btn_notif", help="Notificaciones"):
+                st.toast("No hay notificaciones nuevas en este momento.", icon="🔔")
+        with c2:
+            if st.button("✉", key="btn_correo", help="Mensajes"):
+                st.toast("Bandeja de entrada vacía. No tienes mensajes pendientes.", icon="✉")
+        with c3:
+            st.button("👤", key="btn_perfil", help="Perfil de usuario")
 
 
 # ===== PÁGINAS =====
@@ -945,8 +957,8 @@ def pagina_inicio(df):
             f"<div class='hero-card'>"
             f"<img src='{IMG_HERO}' alt='Cultivo de maíz'/>"
             f"<div class='hero-overlay'>"
-            f"<div class='hero-title'>Monitoreo de cultivos de maíz</div>"
-            f"<div class='hero-sub'>Detección temprana de gusano cogollero y roya</div>"
+            f"<div class='hero-title'>Monitoreo de cultivos de maíz y tomate</div>"
+            f"<div class='hero-sub'>Detección temprana de gusano cogollero, roya del maíz y madurez del tomate</div>"
             f"</div></div>",
             unsafe_allow_html=True,
         )
@@ -1536,8 +1548,10 @@ def ir_a(clave):
     st.session_state.pagina = clave
 
 
-topbar()
+# 1) Barra superior funcional (búsqueda + iconos)
+topbar_nativa()
 
+# 2) Layout principal
 col_menu, col_main = st.columns([1.05, 4.85], gap="medium")
 
 with col_menu:
@@ -1564,7 +1578,16 @@ with col_menu:
             unsafe_allow_html=True,
         )
 
-df = df_all
+# 3) Aplicar filtros (incluida la búsqueda de texto)
+df = df_all.copy()
+busqueda = st.session_state.get("busqueda_global", "").strip().lower()
+if busqueda:
+    columnas_busqueda = ["parcela", "clase_real", "clase_diag", "categoria_diag", "modelo", "algoritmo"]
+    mascara = df[columnas_busqueda].astype(str).apply(
+        lambda col: col.str.lower().str.contains(busqueda, na=False)
+    ).any(axis=1)
+    df = df[mascara]
+
 if f_anio:
     df = df[df["anio"].isin(f_anio)]
 if f_trim:
@@ -1572,11 +1595,12 @@ if f_trim:
 if f_parc:
     df = df[df["parcela"].isin(f_parc)]
 
+# 4) Contenido principal
 titulos = {clave: titulo for clave, _, _, titulo in PAGINAS}
 with col_main:
     encabezado(st.session_state.pagina, titulos[st.session_state.pagina])
     if df.empty:
-        st.warning("No hay datos con los filtros seleccionados. Quita algún filtro en el menú.")
+        st.warning("No hay datos con los filtros o la búsqueda actuales. Prueba a quitar algún filtro.")
     else:
         PAGINAS_FN[st.session_state.pagina](df)
     st.markdown(
