@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Agri Cultur con imágenes del proyecto (maíz, tomate, gusano cogollero, roya).
+Tema: Agri Cultur con imágenes 100% del proyecto (maíz, tomate, campo).
 """
 
 import base64
@@ -62,20 +62,22 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
 
 MIN_VERIF = 5
 
-# ===== Imágenes 100% acordes al proyecto y sin repeticiones =====
-IMG_HERO   = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"   # Campo de maíz
-IMG_R1     = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"       # Tallos de maíz verdes
-IMG_R2     = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"     # Parcela de maíz en hileras
-IMG_R3     = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"       # Hoja de maíz de cerca
-IMG_R4     = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&auto=format&fit=crop&q=80"     # Campo mixto (confusión)
-IMG_R5     = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"     # Maizal al atardecer
-IMG_R6     = "https://images.unsplash.com/photo-1561136594-7f68413baa99?w=1200&auto=format&fit=crop&q=80"       # Planta de tomate
-IMG_DEC    = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"     # Agricultor en campo de maíz
+# ===== Imágenes verificadas (100% del proyecto, sin ranas ni pinos) =====
+# Dashboard y R1-R6
+IMG_HERO   = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"   # Maizal exuberante
+IMG_R1     = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"       # Tallos de maíz sanos
+IMG_R2     = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"     # Surcos de maíz (Incidencia)
+IMG_R3     = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"       # Hoja/campo para revisión de plaga
+IMG_R4     = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"     # Tomate en rama (Confusión)
+IMG_R5     = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"     # Campo al atardecer (Evolución)
+IMG_R6     = "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&auto=format&fit=crop&q=80"     # Tecnología/Algoritmos en campo
+IMG_DEC    = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"     # Agricultor revisando maíz
 
-# Galería final (4 imágenes distintas entre sí y de las de arriba)
-IMG_GAL_1  = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=800&auto=format&fit=crop&q=80"        # Mazorca de maíz (tallos)
+# Galería final (Toma de decisiones)
+IMG_GAL_1  = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=800&auto=format&fit=crop&q=80"        # Mazorca / Tallos de maíz
 IMG_GAL_2  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80"      # Tomates en rama
-IMG_GAL_3  = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=800&auto=format&fit=crop&q=80"      # Parcela de maíz
+# AQUÍ ESTÁ EL CAMBIO QUE PEDISTE: Ranchito de agricultor con maíz
+IMG_GAL_3  = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&auto=format&fit=crop&q=80"      # Ranchito de agricultor
 IMG_GAL_4  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&auto=format&fit=crop&q=80"      # Campo de maíz
 
 
@@ -329,16 +331,16 @@ header[data-testid="stHeader"] { display: none; }
 .st-key-menu [data-baseweb="select"] span { color: #d8d8d8 !important; }
 .st-key-menu [data-baseweb="tag"] { background: rgba(212,245,140,0.2) !important; color: #d4f58c !important; }
 
-/* Brand con logo visible */
+/* Brand con logo GRANDE y visible */
 .brand { padding: 0.2rem 0.4rem 1.4rem; margin-bottom: 0.6rem; }
 .brand-row { display: flex; align-items: center; gap: 0.7rem; }
 .brand-mark {
-    width: 48px; height: 48px; border-radius: 10px;
+    width: 52px; height: 52px; border-radius: 12px;
     background: #ffffff; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    flex-shrink: 0; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 }
 .brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 2px; box-sizing: border-box; }
-.brand-n { color: #ffffff; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+.brand-n { color: #ffffff; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
 .brand-n .brand-accent { color: @@LIME@@; font-weight: 800; }
 
 .logout-btn { margin-top: 1.4rem; padding: 0.8rem 0.9rem; color: #6e6e6e; font-size: 0.82rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
@@ -461,8 +463,8 @@ for token, valor in {
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-# ===== LOGO CORREGIDO (visible) =====
-LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48">
+# ===== LOGO CORREGIDO (Mazorca de maíz) =====
+LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52">
 <circle cx="32" cy="32" r="30" fill="#2d7a3a"/>
 <path d="M32 12 C 22 16, 17 28, 18 46 C 22 52, 30 52, 37 46 C 43 39, 44 24, 36 16 Z" fill="#d4f58c"/>
 <line x1="32" y1="16" x2="32" y2="48" stroke="#1a4d26" stroke-width="2" stroke-linecap="round"/>
@@ -1019,7 +1021,7 @@ def pagina_decisiones(df):
     galeria = [
         (IMG_GAL_1, "Mazorca de maíz"),
         (IMG_GAL_2, "Tomate en rama"),
-        (IMG_GAL_3, "Parcela de maíz"),
+        (IMG_GAL_3, "Ranchito de agricultor"), # <--- CAMBIO AQUÍ
         (IMG_GAL_4, "Campo de maíz"),
     ]
     for col, (url, caption) in zip(gal_cols, galeria):
