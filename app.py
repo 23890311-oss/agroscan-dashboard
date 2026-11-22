@@ -62,11 +62,12 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
 
 MIN_VERIF = 5
 
-# ===== Imágenes verificadas (100% del proyecto, sin ranas ni pinos) =====
+# ===== Imágenes verificadas (100% del proyecto) =====
 # Dashboard y R1-R6
 IMG_HERO   = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"   # Maizal exuberante
 IMG_R1     = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"       # Tallos de maíz sanos
-IMG_R2     = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"     # Surcos de maíz (Incidencia)
+# AQUI ESTÁ LA FOTO DE RANCHITO/PARCELA PARA R2
+IMG_R2     = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"     # Agricultor en el maizal
 IMG_R3     = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"       # Hoja/campo para revisión de plaga
 IMG_R4     = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"     # Tomate en rama (Confusión)
 IMG_R5     = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"     # Campo al atardecer (Evolución)
@@ -76,8 +77,8 @@ IMG_DEC    = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=120
 # Galería final (Toma de decisiones)
 IMG_GAL_1  = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=800&auto=format&fit=crop&q=80"        # Mazorca / Tallos de maíz
 IMG_GAL_2  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80"      # Tomates en rama
-# AQUÍ ESTÁ EL CAMBIO QUE PEDISTE: Ranchito de agricultor con maíz
-IMG_GAL_3  = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&auto=format&fit=crop&q=80"      # Ranchito de agricultor
+# AQUI ESTÁ LA FOTO DE RANCHITO/PARCELA PARA LA GALERÍA
+IMG_GAL_3  = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=800&auto=format&fit=crop&q=80"      # Ranchito de agricultor
 IMG_GAL_4  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&auto=format&fit=crop&q=80"      # Campo de maíz
 
 
@@ -738,6 +739,7 @@ def pagina_r1(df):
 def pagina_r2(df):
     d = sin_desc(df, "parcela")
     if d.empty: st.info(sin_datos("R2")); return
+    # AQUI SE APLICA LA FOTO QUE PEDISTE PARA INCIDENCIA
     page_hero(IMG_R2, "R2 · Incidencia", "Incidencia por parcela", "Distribución del gusano cogollero y la roya del maíz, parcela por parcela")
     total = d["cantidad_escaneos"].sum()
     plaga = d.loc[es_plaga(d), "cantidad_escaneos"].sum()
@@ -1021,7 +1023,7 @@ def pagina_decisiones(df):
     galeria = [
         (IMG_GAL_1, "Mazorca de maíz"),
         (IMG_GAL_2, "Tomate en rama"),
-        (IMG_GAL_3, "Ranchito de agricultor"), # <--- CAMBIO AQUÍ
+        (IMG_GAL_3, "Ranchito de agricultor"), # <--- FOTO DE RANCHITO APLICADA
         (IMG_GAL_4, "Campo de maíz"),
     ]
     for col, (url, caption) in zip(gal_cols, galeria):
