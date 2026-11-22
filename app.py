@@ -1023,7 +1023,7 @@ def pagina_decisiones(df):
     galeria = [
         (IMG_GAL_1, "Mazorca de maíz"),
         (IMG_GAL_2, "Tomate en rama"),
-        (IMG_GAL_3, "Ranchito de agricultor"), # <--- FOTO DE RANCHITO APLICADA
+        (IMG_GAL_3, "Parcela"), # <--- FOTO DE RANCHITO APLICADA
         (IMG_GAL_4, "Campo de maíz"),
     ]
     for col, (url, caption) in zip(gal_cols, galeria):
