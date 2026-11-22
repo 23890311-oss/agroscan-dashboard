@@ -1,6 +1,6 @@
 """
 AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Agri Cultur + imágenes de maíz/tomate + búsqueda y notificaciones funcionales.
+Tema: Agri Cultur con galería visual del proyecto.
 
 Ejecutar:  python -m streamlit run app.py
 Datos:     carpeta data/ con los CSV exportados de PostgreSQL (db_detector_maiz).
@@ -66,26 +66,29 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
 
 MIN_VERIF = 5
 
-# ===== Imágenes acordes al proyecto (Unsplash) =====
-# Maíz: campo, hoja, mazorca
-IMG_MAIZ_CAMPO   = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
-IMG_MAIZ_HOJA    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"
-IMG_MAIZ_MAZORCA = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"  # misma que hoja, pero sirve
-# Tomate: madurez, planta, fruto
-IMG_TOMATE_MADUREZ = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"
-IMG_TOMATE_PLANTA  = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=1200&auto=format&fit=crop&q=80"
-# Agricultor / campo genérico
-IMG_AGRICULTOR     = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"
+# ===== Imágenes del proyecto (todas distintas) =====
+# Dashboard
+IMG_HERO  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&auto=format&fit=crop&q=80"
+# R1: tallos de maíz bonitos (cultivo sano)
+IMG_R1    = "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=1200&auto=format&fit=crop&q=80"
+# R2: parcelas de maíz en hileras
+IMG_R2    = "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=1200&auto=format&fit=crop&q=80"
+# R3: hoja de maíz de cerca (revisión de plaga / roya)
+IMG_R3    = "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&auto=format&fit=crop&q=80"
+# R4: campo mixto (clases que se confunden)
+IMG_R4    = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&auto=format&fit=crop&q=80"
+# R5: maizal hacia el horizonte (evolución temporal)
+IMG_R5    = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&auto=format&fit=crop&q=80"
+# R6: planta de tomate (variedad de algoritmos)
+IMG_R6    = "https://images.unsplash.com/photo-1561136594-7f68413baa99?w=1200&auto=format&fit=crop&q=80"
+# Toma de decisiones: agricultor en sembradío de maíz
+IMG_DEC   = "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&auto=format&fit=crop&q=80"
 
-# Asignación por página
-IMG_HERO = IMG_MAIZ_CAMPO
-IMG_R1   = IMG_MAIZ_HOJA
-IMG_R2   = IMG_TOMATE_MADUREZ
-IMG_R3   = IMG_MAIZ_CAMPO
-IMG_R4   = IMG_MAIZ_MAZORCA
-IMG_R5   = IMG_MAIZ_CAMPO
-IMG_R6   = IMG_TOMATE_PLANTA
-IMG_DEC  = IMG_AGRICULTOR
+# Galería en Toma de decisiones (todas distintas entre sí y de las de arriba)
+IMG_GAL_1 = "https://images.unsplash.com/photo-1595720643580-70d6e3bb4df7?w=800&auto=format&fit=crop&q=80"   # mazorca de maíz
+IMG_GAL_2 = "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80"   # tomates en rama
+IMG_GAL_3 = "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&auto=format&fit=crop&q=80"   # parcela de maíz
+IMG_GAL_4 = "https://images.unsplash.com/photo-1600788886242-5c96aabe3757?w=800&auto=format&fit=crop&q=80"   # campo de maíz
 
 
 # ===== DATOS =====
@@ -318,11 +321,9 @@ header[data-testid="stHeader"] { display: none; }
 .block-container { padding: 1rem 1.6rem 1.6rem 1.6rem; max-width: 100%; }
 [data-testid="stMain"] :is(h1, h2, h3, h4, h5, p, label, li) { color: @@TEXT@@; }
 
-/* ---------- TOPBAR NATIVA (Streamlit) ---------- */
+/* ---------- TOPBAR ---------- */
 .topbar-native {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    display: flex; align-items: center; gap: 1rem;
     padding: 0.3rem 0.3rem 1.1rem 0.3rem;
     margin-bottom: 1rem;
 }
@@ -336,24 +337,18 @@ header[data-testid="stHeader"] { display: none; }
     color: @@TEXT@@ !important;
     box-shadow: none !important;
 }
-.topbar-native .stTextInput > div > div > input::placeholder {
-    color: @@MUTED@@ !important;
-}
+.topbar-native .stTextInput > div > div > input::placeholder { color: @@MUTED@@ !important; }
 .topbar-native .stButton > button {
     background: #ffffff !important;
     border: none !important;
     border-radius: 50% !important;
-    width: 38px !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    padding: 0 !important;
+    width: 38px !important; height: 38px !important;
+    min-height: 38px !important; padding: 0 !important;
     font-size: 1rem !important;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
     color: @@GREEN_DEEP@@ !important;
 }
-.topbar-native .stButton > button:hover {
-    background: @@LIME@@ !important;
-}
+.topbar-native .stButton > button:hover { background: @@LIME@@ !important; }
 
 /* ---------- SIDEBAR ---------- */
 .st-key-menu {
@@ -411,17 +406,26 @@ header[data-testid="stHeader"] { display: none; }
     color: #d4f58c !important;
 }
 
+/* Brand - LOGO CORREGIDO */
 .brand { padding: 0.2rem 0.4rem 1.4rem; margin-bottom: 0.6rem; }
-.brand-row { display: flex; align-items: center; gap: 0.6rem; }
+.brand-row { display: flex; align-items: center; gap: 0.7rem; }
 .brand-mark {
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
     background: #ffffff;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; color: @@GREEN_DEEP@@; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-.brand-mark img { width: 22px; height: 22px; object-fit: contain; }
-.brand-n { color: #ffffff; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.brand-mark img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+    padding: 2px;
+    box-sizing: border-box;
+}
+.brand-n { color: #ffffff; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
 .brand-n .brand-accent { color: @@LIME@@; font-weight: 800; }
 
 .logout-btn {
@@ -451,17 +455,12 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- PAGE HERO ---------- */
 .page-hero {
-    position: relative;
-    border-radius: 18px;
-    overflow: hidden;
-    height: 170px;
-    margin-bottom: 1.2rem;
+    position: relative; border-radius: 18px; overflow: hidden;
+    height: 170px; margin-bottom: 1.2rem;
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     background: #2a4a2a;
 }
-.page-hero img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
-}
+.page-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .page-hero-overlay {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 1.15rem 1.3rem 1rem;
@@ -469,28 +468,21 @@ header[data-testid="stHeader"] { display: none; }
     color: #ffffff;
 }
 .page-hero-tag {
-    display: inline-block;
-    background: @@LIME@@;
-    color: @@TEXT@@;
-    font-size: 0.64rem;
-    font-weight: 800;
-    padding: 0.18rem 0.55rem;
-    border-radius: 6px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    display: inline-block; background: @@LIME@@; color: @@TEXT@@;
+    font-size: 0.64rem; font-weight: 800;
+    padding: 0.18rem 0.55rem; border-radius: 6px;
+    letter-spacing: 0.1em; text-transform: uppercase;
     margin-bottom: 0.45rem;
 }
 .page-hero-title {
     color: #ffffff; font-size: 1.15rem;
-    font-weight: 700; margin-bottom: 0.15rem;
-    letter-spacing: -0.01em;
+    font-weight: 700; margin-bottom: 0.15rem; letter-spacing: -0.01em;
 }
 .page-hero-sub { color: rgba(255,255,255,0.9); font-size: 0.8rem; }
 
 /* ---------- METRIC CARD ---------- */
 .metric-card {
-    background: #ffffff;
-    border-radius: 18px;
+    background: #ffffff; border-radius: 18px;
     padding: 1.15rem 1.2rem 1rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
     margin-bottom: 0.6rem;
@@ -514,8 +506,7 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- STATUS CARD ---------- */
 .status-card {
-    background: #e6f2d8;
-    border-radius: 18px;
+    background: #e6f2d8; border-radius: 18px;
     padding: 1.1rem 1.2rem;
     margin-bottom: 0.6rem; min-height: 110px;
 }
@@ -527,13 +518,9 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- HERO (home) ---------- */
 .hero-card {
-    position: relative;
-    border-radius: 22px;
-    overflow: hidden;
+    position: relative; border-radius: 22px; overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    height: 300px;
-    margin-bottom: 0.6rem;
-    background: #2a4a2a;
+    height: 300px; margin-bottom: 0.6rem; background: #2a4a2a;
 }
 .hero-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hero-overlay {
@@ -630,8 +617,7 @@ header[data-testid="stHeader"] { display: none; }
 
 /* ---------- HALLAZGO ---------- */
 .hallazgo {
-    background: #f7fbe9;
-    border-left: 3px solid @@LIME_DEEP@@;
+    background: #f7fbe9; border-left: 3px solid @@LIME_DEEP@@;
     color: @@TEXT@@; border-radius: 0 12px 12px 0;
     padding: 0.85rem 1.15rem; margin: 0.9rem 0;
     font-size: 0.88rem; line-height: 1.6;
@@ -661,6 +647,23 @@ header[data-testid="stHeader"] { display: none; }
     display: block; font-size: 0.72rem; color: @@GREEN@@;
     font-weight: 700; margin-bottom: 0.3rem;
     letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+/* ---------- GALLERY (Toma de decisiones) ---------- */
+.gallery-card {
+    border-radius: 14px; overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
+    margin-bottom: 0.6rem;
+}
+.gallery-card img {
+    width: 100%; height: 150px; object-fit: cover; display: block;
+}
+.gallery-caption {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.74rem; color: @@TEXT@@;
+    font-weight: 600; text-align: center;
+    background: #ffffff;
 }
 
 /* ---------- PIE ---------- */
@@ -718,18 +721,30 @@ for token, valor in {
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-<path d="M16 4 C 8 10, 6 20, 8 28 C 14 30, 20 26, 24 18 C 26 12, 24 6, 16 4 Z" fill="#2d7a3a"/>
-<path d="M16 8 L 16 24 M 12 16 L 16 18 M 20 14 L 16 16" stroke="#d4f58c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-</svg>"""
+# ===== LOGO CORREGIDO =====
+LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44">
+<circle cx="32" cy="32" r="30" fill="#2d7a3a"/>
+<path d="M32 12 C 22 16, 17 28, 18 46 C 22 52, 30 52, 37 46 C 43 39, 44 24, 36 16 Z" fill="#d4f58c"/>
+<line x1="32" y1="16" x2="32" y2="48" stroke="#1a4d26" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="24" y1="24" x2="32" y2="29" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="32" y1="29" x2="40" y2="24" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="23" y1="34" x2="32" y2="39" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="32" y1="39" x2="41" y2="34" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="25" y1="44" x2="32" y2="47" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="32" y1="47" x2="39" y2="44" stroke="#1a4d26" stroke-width="1.2" stroke-linecap="round"/>
+</svg>'''
 
 
 def logo_html():
+    """Logo: usa logo.png si existe; si no, SVG de maíz embebido."""
     if LOGO.exists():
-        datos, tipo = base64.b64encode(LOGO.read_bytes()).decode(), "image/png"
-    else:
-        datos, tipo = base64.b64encode(LOGO_SVG.encode()).decode(), "image/svg+xml"
-    return f'<img src="data:{tipo};base64,{datos}" alt="logo">'
+        try:
+            datos = base64.b64encode(LOGO.read_bytes()).decode()
+            return f'<img src="data:image/png;base64,{datos}" alt="logo"/>'
+        except Exception:
+            pass
+    datos = base64.b64encode(LOGO_SVG.encode("utf-8")).decode()
+    return f'<img src="data:image/svg+xml;base64,{datos}" alt="logo"/>'
 
 
 # ----- utilidades de dibujo -----
@@ -865,7 +880,6 @@ def encabezado(clave, titulo):
 
 
 def page_hero(image_url, tag, title, subtitle):
-    """Banner con imagen al inicio de cada página."""
     st.markdown(
         f"<div class='page-hero'>"
         f"<img src='{image_url}' alt='{escape(title)}'/>"
@@ -900,9 +914,8 @@ def barra_h(r, x, y, titulo, fmt, xt, color=None):
     return estilo(fig, titulo, x=xt)
 
 
-# ===== TOPBAR NATIVA (funcional) =====
+# ===== TOPBAR NATIVA =====
 def topbar_nativa():
-    """Barra superior con búsqueda real y botones funcionales usando columnas."""
     col_buscar, col_iconos = st.columns([3, 1], gap="medium")
     with col_buscar:
         st.text_input(
@@ -915,12 +928,12 @@ def topbar_nativa():
         c1, c2, c3 = st.columns(3, gap="small")
         with c1:
             if st.button("🔔", key="btn_notif", help="Notificaciones"):
-                st.toast("No hay notificaciones nuevas en este momento.", icon="🔔")
+                st.toast("No hay notificaciones nuevas.", icon="🔔")
         with c2:
             if st.button("✉", key="btn_correo", help="Mensajes"):
-                st.toast("Bandeja de entrada vacía. No tienes mensajes pendientes.", icon="✉")
+                st.toast("Bandeja de entrada vacía.", icon="✉")
         with c3:
-            st.button("👤", key="btn_perfil", help="Perfil de usuario")
+            st.button("👤", key="btn_perfil", help="Perfil")
 
 
 # ===== PÁGINAS =====
@@ -957,8 +970,8 @@ def pagina_inicio(df):
             f"<div class='hero-card'>"
             f"<img src='{IMG_HERO}' alt='Cultivo de maíz'/>"
             f"<div class='hero-overlay'>"
-            f"<div class='hero-title'>Monitoreo de cultivos de maíz y tomate</div>"
-            f"<div class='hero-sub'>Detección temprana de gusano cogollero, roya del maíz y madurez del tomate</div>"
+            f"<div class='hero-title'>Monitoreo de maíz y tomate</div>"
+            f"<div class='hero-sub'>Gusano cogollero, roya del maíz y madurez del tomate con IA</div>"
             f"</div></div>",
             unsafe_allow_html=True,
         )
@@ -1076,7 +1089,7 @@ def pagina_r1(df):
         return
     page_hero(IMG_R1, "R1 · Exactitud",
               "Precisión diagnóstica del modelo",
-              "Comparación entre la clase real y el diagnóstico del detector a lo largo del tiempo")
+              "Tallos de maíz sanos frente a diagnósticos de gusano cogollero y roya")
     prec = precision(d)
     rc = resumen(d, "clase_real")
     mejor, peor = _mejor_peor(rc)
@@ -1141,7 +1154,7 @@ def pagina_r2(df):
         return
     page_hero(IMG_R2, "R2 · Incidencia",
               "Incidencia por parcela",
-              "Distribución de plagas y enfermedades en el campo, parcela por parcela")
+              "Distribución del gusano cogollero y la roya del maíz, parcela por parcela")
     total = d["cantidad_escaneos"].sum()
     plaga = d.loc[es_plaga(d), "cantidad_escaneos"].sum()
     enf = d.loc[cat_es(d, ["enfermedad"]), "cantidad_escaneos"].sum()
@@ -1203,8 +1216,8 @@ def pagina_r3(df):
         st.info(sin_datos("R3"))
         return
     page_hero(IMG_R3, "R3 · Confianza baja",
-              "Escaneos con confianza baja",
-              "Diagnósticos que requieren revisión manual del experto")
+              "Escaneos que requieren revisión manual",
+              "Hojas y mazorcas con diagnósticos dudosos de gusano o roya")
     baja = pct_baja(d)
     n_baja = (d["conf_baja"] * d["cantidad_escaneos"]).sum()
     rm = resumen(sin_desc(d, "modelo"), "modelo").dropna(subset=["baja_pct"])
@@ -1257,7 +1270,7 @@ def pagina_r4(df):
         return
     page_hero(IMG_R4, "R4 · Matriz de confusión",
               "Clase real vs. diagnóstico del modelo",
-              "Análisis detallado de aciertos y confusiones entre clases")
+              "Aciertos y confusiones entre gusano cogollero, roya y otras clases")
     total = cm.values.sum()
     ok = np.trace(cm.values)
     m = met.dropna(subset=["sensibilidad"])
@@ -1323,7 +1336,7 @@ NIVELES = {"Año": "anio", "Trimestre": "anio_trim", "Mes": "periodo", "Día": "
 def pagina_r5(df):
     page_hero(IMG_R5, "R5 · Evolución",
               "Evolución temporal de los diagnósticos",
-              "Tendencias de volumen, incidencia y confianza a lo largo del tiempo")
+              "Tendencias de gusano cogollero y roya del maíz a lo largo del tiempo")
     nivel = st.radio("Nivel de detalle", list(NIVELES), index=2, horizontal=True, key="nivel_tiempo")
     col = NIVELES[nivel]
     por = resumen(df, col)
@@ -1386,7 +1399,7 @@ def pagina_r6(df):
         return
     page_hero(IMG_R6, "R6 · Algoritmos",
               "Algoritmos y versiones del modelo",
-              "Comparativa de desempeño entre algoritmos y versiones desplegadas")
+              "Comparativa de desempeño entre versiones para maíz y tomate")
     rv = resumen(d, "modelo")
     ra = resumen(sin_desc(d, "algoritmo"), "algoritmo")
     mejor_v, _ = _mejor_peor(rv)
@@ -1454,8 +1467,8 @@ def pagina_decisiones(df):
         st.info(sin_datos("Toma de decisiones"))
         return
     page_hero(IMG_DEC, "Toma de decisiones",
-              "Síntesis analítica para la acción",
-              "Planteamiento, análisis estadístico y decisión recomendada con base en evidencia")
+              "Síntesis analítica para la acción en campo",
+              "Planteamiento, análisis estadístico y decisión con base en evidencia agrícola")
 
     total = df["cantidad_escaneos"].sum()
     prec = precision(df)
@@ -1469,9 +1482,9 @@ def pagina_decisiones(df):
     with c1:
         st.markdown(
             "<div class='info-card'><div class='lbl'>¿Qué queremos analizar?</div>"
-            "<div class='txt'>El desempeño del detector inteligente del gusano cogollero y la roya del maíz a lo "
-            "largo del tiempo: exactitud, incidencia por parcela, confianza de los diagnósticos y confiabilidad "
-            "de las versiones desplegadas.</div></div>",
+            "<div class='txt'>El desempeño del detector inteligente del gusano cogollero, la roya del maíz y la "
+            "madurez del tomate a lo largo del tiempo: exactitud, incidencia por parcela, confianza de los "
+            "diagnósticos y confiabilidad de las versiones desplegadas.</div></div>",
             unsafe_allow_html=True,
         )
     with c2:
@@ -1527,6 +1540,31 @@ def pagina_decisiones(df):
         for n, texto in enumerate(recs, 1):
             st.markdown(f"<div class='reco-box'><b>Acción {n}.</b> {texto}</div>", unsafe_allow_html=True)
 
+    # ---- 04 · Galería visual del proyecto ----
+    seccion("04", "Contexto visual del campo")
+    st.markdown(
+        "<div style='color:#8a8a8a;font-size:0.82rem;margin:-0.3rem 0 0.9rem 0;'>"
+        "Imágenes del cultivo que respaldan las decisiones: maíz, tomate y parcelas monitoreadas."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    gal_cols = st.columns(4, gap="small")
+    galeria = [
+        (IMG_GAL_1, "Mazorca de maíz"),
+        (IMG_GAL_2, "Tomate en rama"),
+        (IMG_GAL_3, "Parcela de maíz"),
+        (IMG_GAL_4, "Campo de maíz"),
+    ]
+    for col, (url, caption) in zip(gal_cols, galeria):
+        with col:
+            st.markdown(
+                f"<div class='gallery-card'>"
+                f"<img src='{url}' alt='{escape(caption)}'/>"
+                f"<div class='gallery-caption'>{escape(caption)}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
 
 PAGINAS_FN = {
     "inicio": pagina_inicio, "r1": pagina_r1, "r2": pagina_r2, "r3": pagina_r3,
@@ -1548,10 +1586,8 @@ def ir_a(clave):
     st.session_state.pagina = clave
 
 
-# 1) Barra superior funcional (búsqueda + iconos)
 topbar_nativa()
 
-# 2) Layout principal
 col_menu, col_main = st.columns([1.05, 4.85], gap="medium")
 
 with col_menu:
@@ -1578,7 +1614,6 @@ with col_menu:
             unsafe_allow_html=True,
         )
 
-# 3) Aplicar filtros (incluida la búsqueda de texto)
 df = df_all.copy()
 busqueda = st.session_state.get("busqueda_global", "").strip().lower()
 if busqueda:
@@ -1595,7 +1630,6 @@ if f_trim:
 if f_parc:
     df = df[df["parcela"].isin(f_parc)]
 
-# 4) Contenido principal
 titulos = {clave: titulo for clave, _, _, titulo in PAGINAS}
 with col_main:
     encabezado(st.session_state.pagina, titulos[st.session_state.pagina])
