@@ -1,0 +1,4 @@
+id_ejecucion,algoritmo,tecnica,variable_objetivo,n_registros,auc,ca,f1,precision_m,recall_m,seleccionado,fecha_ejecucion
+orange_2026-11-22_v1,Logistic Regression,Clasificación,acierto,133,0.9380,0.9400,0.8180,0.9000,0.7500,f,2026-11-22 23:45:38.668532
+orange_2026-11-22_v1,Tree,Clasificación,acierto,133,0.9400,0.9620,0.8840,1.0000,0.7920,t,2026-11-22 23:45:38.668532
+orange_2026-11-22_v1,Random Forest,Clasificación,acierto,133,0.8360,0.9020,0.6290,1.0000,0.4580,f,2026-11-22 23:45:38.668532
