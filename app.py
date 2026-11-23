@@ -1,8 +1,3 @@
-"""
-AgroScan - Dashboard interactivo con navegación lateral (Streamlit)
-Tema: Agri Cultur con imágenes 100% del proyecto (maíz, tomate, campo).
-"""
-
 import base64
 from html import escape
 from pathlib import Path
@@ -464,7 +459,7 @@ for token, valor in {
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-# ===== LOGO CORREGIDO (Mazorca de maíz) =====
+# ===== LOGO  (Mazorca de maíz) =====
 LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52">
 <circle cx="32" cy="32" r="30" fill="#2d7a3a"/>
 <path d="M32 12 C 22 16, 17 28, 18 46 C 22 52, 30 52, 37 46 C 43 39, 44 24, 36 16 Z" fill="#d4f58c"/>
@@ -739,7 +734,7 @@ def pagina_r1(df):
 def pagina_r2(df):
     d = sin_desc(df, "parcela")
     if d.empty: st.info(sin_datos("R2")); return
-    # AQUI SE APLICA LA FOTO QUE PEDISTE PARA INCIDENCIA
+
     page_hero(IMG_R2, "R2 · Incidencia", "Incidencia por parcela", "Distribución del gusano cogollero y la roya del maíz, parcela por parcela")
     total = d["cantidad_escaneos"].sum()
     plaga = d.loc[es_plaga(d), "cantidad_escaneos"].sum()
@@ -1017,18 +1012,85 @@ def pagina_decisiones(df):
         for n, texto in enumerate(recs, 1):
             st.markdown(f"<div class='reco-box'><b>Acción {n}.</b> {texto}</div>", unsafe_allow_html=True)
 
-    seccion("04", "Contexto visual del campo")
+    bloque_mineria()
+
+    seccion("05", "Contexto visual del campo")
     st.markdown("<div style='color:#8a8a8a;font-size:0.82rem;margin:-0.3rem 0 0.9rem 0;'>Imágenes del cultivo que respaldan las decisiones: maíz, tomate y parcelas monitoreadas.</div>", unsafe_allow_html=True)
     gal_cols = st.columns(4, gap="small")
     galeria = [
         (IMG_GAL_1, "Mazorca de maíz"),
         (IMG_GAL_2, "Tomate en rama"),
-        (IMG_GAL_3, "Parcela"), # <--- FOTO DE RANCHITO APLICADA
+        (IMG_GAL_3, "Parcela"), 
         (IMG_GAL_4, "Campo de maíz"),
     ]
     for col, (url, caption) in zip(gal_cols, galeria):
         with col:
             st.markdown(f"<div class='gallery-card'><img src='{url}' alt='{escape(caption)}'/><div class='gallery-caption'>{escape(caption)}</div></div>", unsafe_allow_html=True)
+
+
+# ----- minería de datos (resultados de Orange cargados con el ETL 2) -----
+@st.cache_data(show_spinner=False)
+def cargar_mineria():
+    """Lee los CSV exportados de mineria.v_predicciones_dashboard y mineria.modelo_ejecucion (opcionales)."""
+    try:
+        return _csv("predicciones_mineria.csv"), _csv("modelo_ejecucion.csv")
+    except FileNotFoundError:
+        return None, None
+
+
+def bloque_mineria():
+    pred, met = cargar_mineria()
+    if pred is None or pred.empty or met is None or met.empty:
+        return
+    seccion("04", "Minería de datos: predicción de errores del detector")
+    sel = met[met["seleccionado"].astype(str).str.lower().isin(["true", "t", "1"])]
+    mejor = sel.iloc[0] if len(sel) else met.sort_values("auc", ascending=False).iloc[0]
+    alg = mejor["algoritmo"]
+    p = pred[pred["algoritmo_mineria"] == alg].copy()
+    if p.empty:
+        p = pred.copy()
+
+    c = st.columns(4, gap="medium")
+    kpi(c[0], "Modelo elegido", alg, "Orange, validación cruzada 10 folds")
+    kpi(c[1], "AUC", f"{mejor['auc']:.3f}", "capacidad de separar errores")
+    kpi(c[2], "Exactitud (CA)", f"{mejor['ca'] * 100:.1f}%", "")
+    kpi(c[3], "Recall de errores", f"{mejor['recall_m'] * 100:.1f}%", "errores reales detectados")
+
+    m = met.melt(id_vars="algoritmo", value_vars=["auc", "ca", "f1", "recall_m"], var_name="metrica", value_name="valor")
+    m["metrica"] = m["metrica"].map({"auc": "AUC", "ca": "Exactitud", "f1": "F1", "recall_m": "Recall"})
+    fig_m = px.bar(m, x="algoritmo", y="valor", color="metrica", barmode="group",
+                   color_discrete_sequence=PALETA, text_auto=".2f")
+    estilo(fig_m, "Comparación de modelos", y="Valor")
+
+    mc = p.groupby(["acierto_real", "prediccion"]).size().reset_index(name="n")
+    z = mc.pivot(index="acierto_real", columns="prediccion", values="n").reindex(index=[0, 1], columns=[0, 1]).fillna(0)
+    fig_c = px.imshow(z.values, x=["Predice error", "Predice acierto"], y=["Real: error", "Real: acierto"],
+                      text_auto=True, color_continuous_scale=["#F2F7FB", "#0F4C81"], aspect="auto")
+    fig_c.update_coloraxes(showscale=False)
+    estilo(fig_c, f"Matriz de confusión ({alg})")
+
+    r = p.groupby("parcela", as_index=False)["prob_error"].mean()
+    r["prob_error"] = r["prob_error"] * 100
+    fig_p = barra_h(r, "prob_error", "parcela", "Riesgo promedio de error por parcela", ".1f", "Probabilidad de error (%)")
+
+    r2 = p.groupby("algoritmo_detector", as_index=False)["prob_error"].mean()
+    r2["prob_error"] = r2["prob_error"] * 100
+    fig_a = barra_h(r2, "prob_error", "algoritmo_detector", "Riesgo promedio de error por algoritmo del detector",
+                    ".1f", "Probabilidad de error (%)")
+    rejilla([("min_modelos", fig_m), ("min_conf", fig_c), ("min_parcela", fig_p), ("min_alg", fig_a)])
+
+    st.markdown("**Escaneos con mayor riesgo de error**")
+    top = p.sort_values("prob_error", ascending=False).head(10)[
+        ["id_escaneo", "parcela", "clase_diagnostico", "confianza_pct", "prob_error"]].copy()
+    top["prob_error"] = (top["prob_error"] * 100).round(1)
+    top.columns = ["Escaneo", "Parcela", "Diagnóstico", "Confianza (%)", "Riesgo de error (%)"]
+    st.dataframe(top, hide_index=True)
+
+    baja = p["confianza_pct"].notna() & (p["confianza_pct"] <= UMBRAL)
+    hallazgo(f"El modelo {alg} separa bien los errores (AUC {mejor['auc']:.2f}), pero el principal factor es la confianza: "
+             f"los escaneos con confianza de {UMBRAL}% o menos concentran las predicciones de error "
+             f"({int(baja.sum())} de {len(p)} escaneos verificados). Decisión: enviar a revisión experta todo escaneo con "
+             f"riesgo de error alto y reentrenar el detector con más imágenes de las clases que más fallan.")
 
 
 PAGINAS_FN = {
