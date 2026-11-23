@@ -38,7 +38,7 @@ PAGINAS = [
     ("decisiones", "◉", "Toma de decisiones",   "Toma de decisiones"),
 ]
 
-# ===== Paleta Agri Cultur =====
+# ===== Paleta AgroScan =====
 COLOR_BG          = "#f4f2ec"
 COLOR_SIDEBAR     = "#242424"
 COLOR_LIME        = "#d4f58c"
@@ -459,7 +459,7 @@ for token, valor in {
     CSS = CSS.replace(token, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
-# ===== LOGO  (Mazorca de maíz) =====
+# ===== LOGO (Mazorca de maíz) =====
 LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52">
 <circle cx="32" cy="32" r="30" fill="#2d7a3a"/>
 <path d="M32 12 C 22 16, 17 28, 18 46 C 22 52, 30 52, 37 46 C 43 39, 44 24, 36 16 Z" fill="#d4f58c"/>
@@ -734,7 +734,7 @@ def pagina_r1(df):
 def pagina_r2(df):
     d = sin_desc(df, "parcela")
     if d.empty: st.info(sin_datos("R2")); return
-
+   
     page_hero(IMG_R2, "R2 · Incidencia", "Incidencia por parcela", "Distribución del gusano cogollero y la roya del maíz, parcela por parcela")
     total = d["cantidad_escaneos"].sum()
     plaga = d.loc[es_plaga(d), "cantidad_escaneos"].sum()
@@ -1046,6 +1046,16 @@ def bloque_mineria():
     sel = met[met["seleccionado"].astype(str).str.lower().isin(["true", "t", "1"])]
     mejor = sel.iloc[0] if len(sel) else met.sort_values("auc", ascending=False).iloc[0]
     alg = mejor["algoritmo"]
+    pred = pred.rename(columns=lambda c: str(c).strip().lower())
+    if "algoritmo_mineria" not in pred.columns:
+        pred["algoritmo_mineria"] = pred["algoritmo"] if "algoritmo" in pred.columns else alg
+    pedidas = ["prediccion", "prob_error", "acierto_real", "parcela", "algoritmo_detector",
+               "clase_diagnostico", "confianza_pct", "id_escaneo"]
+    faltan = [c for c in pedidas if c not in pred.columns]
+    if faltan:
+        st.warning("predicciones_mineria.csv debe exportarse de la vista mineria.v_predicciones_dashboard. "
+                   "Columnas que faltan: " + ", ".join(faltan))
+        return
     p = pred[pred["algoritmo_mineria"] == alg].copy()
     if p.empty:
         p = pred.copy()
