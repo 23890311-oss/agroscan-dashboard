@@ -1,4 +1,7 @@
 import base64
+import os
+import unicodedata
+from datetime import datetime
 from html import escape
 from pathlib import Path
 
@@ -7,6 +10,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 
 st.set_page_config(
     page_title="AgroScan · Dashboard",
@@ -36,6 +41,7 @@ PAGINAS = [
     ("r5",         "↗", "R5 · Evolución",       "Evolución temporal"),
     ("r6",         "⚙", "R6 · Algoritmos",      "Algoritmos y versiones"),
     ("decisiones", "◉", "Toma de decisiones",   "Toma de decisiones"),
+    ("registrar",  "＋", "Nuevo registro",       "Agregar nuevo registro"),
 ]
 
 # ===== Paleta AgroScan =====
@@ -56,6 +62,15 @@ PALETA = ["#2d7a3a", "#d4f58c", "#1a4d26", "#8fc99a",
           "#c8e6c9", "#e8a44d", "#7bc99a", "#4a8b5c"]
 
 MIN_VERIF = 5
+
+# ===== BASE DE DATOS (PostgreSQL) =====
+# Cambia solo estos valores (o define las variables de entorno con el mismo nombre)
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "TU_PASSWORD")   # <-- pon tu contraseña
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_NAME = os.getenv("DB_NAME", "db_detector_maiz")
+REFRESCO_SEGUNDOS = 30     # el dashboard se actualiza solo cada 30 s
 
 # ===== Imágenes verificadas (100% del proyecto) =====
 # Dashboard y R1-R6
@@ -81,13 +96,116 @@ IMG_GAL_4  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800
 def _csv(nombre):
     return pd.read_csv(DATA_DIR / nombre, encoding="utf-8-sig")
 
-@st.cache_data(show_spinner=False)
+
+@st.cache_resource
+def get_engine():
+    url = URL.create("postgresql+psycopg", username=DB_USER, password=DB_PASSWORD,
+                     host=DB_HOST, port=DB_PORT, database=DB_NAME)
+    return create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 3})
+
+
+def db_disponible():
+    try:
+        with get_engine().connect() as con:
+            con.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
+
+
+MESES_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+            "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+
+def _norm(s):
+    """Texto en minúsculas, sin acentos ni guiones bajos, para comparar nombres de clases."""
+    t = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
+    return " ".join(t.replace("_", " ").split())
+
+
+def _a_num01(s):
+    """Convierte true/false, 1/0, t/f a 1.0 / 0.0 (lo demás queda vacío)."""
+    def f(v):
+        if v is True:
+            return 1.0
+        if v is False:
+            return 0.0
+        t = str(v).strip().lower()
+        if t in ("1", "1.0", "true", "t", "si", "sí"):
+            return 1.0
+        if t in ("0", "0.0", "false", "f", "no"):
+            return 0.0
+        return np.nan
+    return s.map(f)
+
+
+def _filas_app(app, clase, tiempo):
+    """Convierte los registros de la app (tabla registros) al mismo formato que el resto del dashboard."""
+    if app is None or app.empty:
+        return pd.DataFrame()
+    fecha = pd.to_datetime(app["fecha_captura"], errors="coerce")
+    ok = fecha.notna()
+    app, fecha = app[ok], fecha[ok]
+    if app.empty:
+        return pd.DataFrame()
+
+    cat = {_norm(r.nombre_clase): (str(r.nombre_clase), str(r.categoria)) for r in clase.itertuples()}
+    nombres_mes = dict(zip(tiempo["mes"], tiempo["nombre_mes"]))
+    diag = app["diagnostico"].astype(str).str.strip()
+    nombre = diag.map(lambda v: cat.get(_norm(v), (v, "desconocido"))[0])
+    categ = diag.map(lambda v: cat.get(_norm(v), (v, "desconocido"))[1])
+    mes = fecha.dt.month
+    anio = fecha.dt.year.astype(str)
+    trim = "T" + fecha.dt.quarter.astype(str)
+    if "parcela" in app.columns:
+        parcela = app["parcela"].fillna("desconocido").astype(str).replace("", "desconocido")
+    else:
+        parcela = "desconocido"
+
+    return pd.DataFrame({
+        "fecha": fecha,
+        "anio": anio,
+        "mes": mes,
+        "nombre_mes": mes.map(lambda m: nombres_mes.get(m, MESES_ES[int(m) - 1])),
+        "trimestre": trim,
+        "anio_trim": anio + "-" + trim,
+        "periodo": fecha.dt.strftime("%Y-%m"),
+        "dia": fecha.dt.strftime("%Y-%m-%d"),
+        "clase_real": "desconocido",          # la app no trae la clase real del experto
+        "categoria_real": "desconocido",
+        "clase_diag": nombre,
+        "categoria_diag": categ,
+        "parcela": parcela,
+        "algoritmo": "desconocido",
+        "modelo": "desconocido",
+        "confianza_pct": pd.to_numeric(app["confianza_pct"], errors="coerce"),
+        "acierto": _a_num01(app["acierto"]) if "acierto" in app.columns else np.nan,
+        "cantidad_escaneos": 1,
+    })
+
+
+@st.cache_data(ttl=5, show_spinner=False)
 def cargar_datos():
-    fact = _csv("fact_escaneos.csv")
-    tiempo = _csv("dim_tiempo.csv")
-    clase = _csv("dim_clase.csv")
-    parcela = _csv("dim_parcela.csv")
-    modelo = _csv("dim_modelo.csv")
+    """Lee PostgreSQL (o los CSV si no hay conexión) y agrega los escaneos de la app."""
+    if db_disponible():
+        eng = get_engine()
+        fact, tiempo, clase, parcela, modelo = (
+            pd.read_sql(f"SELECT * FROM {t}", eng)
+            for t in ("fact_escaneos", "dim_tiempo", "dim_clase", "dim_parcela", "dim_modelo")
+        )
+        try:
+            app = pd.read_sql("SELECT * FROM v_registros_dash", eng)
+        except Exception:
+            app = pd.DataFrame()
+        fuente = "PostgreSQL"
+    else:
+        fact = _csv("fact_escaneos.csv")
+        tiempo = _csv("dim_tiempo.csv")
+        clase = _csv("dim_clase.csv")
+        parcela = _csv("dim_parcela.csv")
+        modelo = _csv("dim_modelo.csv")
+        app = pd.DataFrame()
+        fuente = "CSV local"
 
     tiempo["fecha"] = pd.to_datetime(tiempo["fecha"], errors="coerce")
     tiempo["periodo"] = tiempo["fecha"].dt.strftime("%Y-%m")
@@ -115,14 +233,19 @@ def cargar_datos():
         .rename(columns={"nombre_parcela": "parcela"})
     )
 
+    # Escaneos que llegaron desde la app móvil
+    extra = _filas_app(app, clase, tiempo)
+    if not extra.empty:
+        df = pd.concat([df, extra], ignore_index=True)
+
     for col in ["clase_real", "categoria_real", "clase_diag", "categoria_diag", "parcela", "algoritmo", "modelo"]:
         df[col] = df[col].fillna("desconocido").astype(str)
 
     df["confianza_pct"] = pd.to_numeric(df["confianza_pct"], errors="coerce")
-    df["acierto"] = pd.to_numeric(df["acierto"], errors="coerce")
+    df["acierto"] = _a_num01(df["acierto"])
     df["cantidad_escaneos"] = pd.to_numeric(df["cantidad_escaneos"], errors="coerce").fillna(1)
     df["conf_baja"] = (df["confianza_pct"] < UMBRAL).astype(float).where(df["confianza_pct"].notna())
-    return df
+    return df, fuente, len(extra)
 
 def resumen(df, por):
     n = df["cantidad_escaneos"]
@@ -282,23 +405,6 @@ header[data-testid="stHeader"] { display: none; }
 .stApp { background: @@BG@@; min-height: 100vh; }
 .block-container { padding: 1rem 1.6rem 1.6rem 1.6rem; max-width: 100%; }
 [data-testid="stMain"] :is(h1, h2, h3, h4, h5, p, label, li) { color: @@TEXT@@; }
-
-/* ---------- TOPBAR ---------- */
-.topbar-native { display: flex; align-items: center; gap: 1rem; padding: 0.3rem 0.3rem 1.1rem 0.3rem; margin-bottom: 1rem; }
-.topbar-native .stTextInput > div > div > input {
-    background: transparent !important; border: none !important;
-    border-bottom: 1px solid #ded9d0 !important; border-radius: 0 !important;
-    padding: 0.45rem 0.2rem !important; font-size: 0.86rem !important;
-    color: @@TEXT@@ !important; box-shadow: none !important;
-}
-.topbar-native .stTextInput > div > div > input::placeholder { color: @@MUTED@@ !important; }
-.topbar-native .stButton > button {
-    background: #ffffff !important; border: none !important;
-    border-radius: 50% !important; width: 38px !important; height: 38px !important;
-    min-height: 38px !important; padding: 0 !important; font-size: 1rem !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important; color: @@GREEN_DEEP@@ !important;
-}
-.topbar-native .stButton > button:hover { background: @@LIME@@ !important; }
 
 /* ---------- SIDEBAR ---------- */
 .st-key-menu {
@@ -583,20 +689,6 @@ def barra_h(r, x, y, titulo, fmt, xt, color=None):
     fig = px.bar(r, x=x, y=y, orientation="h", text_auto=fmt, color=color, color_discrete_sequence=PALETA if color else [COLOR_BARRA])
     fig.update_traces(textfont=dict(color=COLOR_TEXT, size=10), marker_line_width=0)
     return estilo(fig, titulo, x=xt)
-
-# ===== TOPBAR NATIVA =====
-def topbar_nativa():
-    col_buscar, col_iconos = st.columns([3, 1], gap="medium")
-    with col_buscar:
-        st.text_input("Buscar", key="busqueda_global", placeholder="Buscar cultivos, parcelas o modelos…", label_visibility="collapsed")
-    with col_iconos:
-        c1, c2, c3 = st.columns(3, gap="small")
-        with c1:
-            if st.button("🔔", key="btn_notif", help="Notificaciones"): st.toast("No hay notificaciones nuevas.", icon="🔔")
-        with c2:
-            if st.button("✉", key="btn_correo", help="Mensajes"): st.toast("Bandeja de entrada vacía.", icon="✉")
-        with c3:
-            st.button("👤", key="btn_perfil", help="Perfil")
 
 # ===== PÁGINAS =====
 def pagina_inicio(df):
@@ -1103,6 +1195,77 @@ def bloque_mineria():
              f"riesgo de error alto y reentrenar el detector con más imágenes de las clases que más fallan.")
 
 
+def pie(fuente, n_app):
+    if fuente == "PostgreSQL":
+        txt = (f"Fuente: PostgreSQL · {DB_NAME} · {fmt_int(n_app)} escaneos desde la app · "
+               f"actualizado {datetime.now():%H:%M:%S} (cada {REFRESCO_SEGUNDOS} s) · Instituto Tecnológico de Tizimín")
+    else:
+        txt = "Sin conexión a PostgreSQL: mostrando los CSV de la carpeta data/ · Instituto Tecnológico de Tizimín"
+    st.markdown(f"<div class='pie'>{txt}</div>", unsafe_allow_html=True)
+
+
+def pagina_registrar(df_all, fuente):
+    if fuente != "PostgreSQL":
+        st.warning("No hay conexión a PostgreSQL, así que no se pueden guardar registros. "
+                   "Revisa que esté encendido y que la contraseña de la sección BASE DE DATOS de app.py sea correcta.")
+        return
+
+    st.markdown("Los registros se guardan en la tabla **registros** (la misma que usa la app). "
+                f"El dashboard los muestra en máximo {REFRESCO_SEGUNDOS} segundos.")
+
+    clases = sorted(sin_desc(df_all, "clase_diag")["clase_diag"].unique().tolist())
+    parcelas = ["Sin parcela"] + sorted(sin_desc(df_all, "parcela")["parcela"].unique().tolist())
+    ahora = datetime.now()
+
+    with st.form("form_registro", clear_on_submit=True):
+        c1, c2 = st.columns(2, gap="medium")
+        cultivo = c1.selectbox("Cultivo", ["Maíz", "Tomate"])
+        diagnostico = c2.selectbox("Diagnóstico", clases)
+        confianza = st.slider("Confianza (%)", 0, 100, 90)
+        c3, c4 = st.columns(2, gap="medium")
+        fecha = c3.date_input("Fecha de captura", value=ahora.date())
+        hora = c4.time_input("Hora", value=ahora.time().replace(second=0, microsecond=0))
+        c5, c6 = st.columns(2, gap="medium")
+        parcela = c5.selectbox("Parcela", parcelas)
+        dispositivo = c6.text_input("Dispositivo", value="Celular de prueba")
+        foto = st.file_uploader("Foto de la hoja o mazorca (opcional)", type=["jpg", "jpeg", "png"])
+        enviar = st.form_submit_button("Guardar registro", type="primary")
+
+    if enviar:
+        img = None
+        if foto is not None:
+            if foto.size <= 3 * 1024 * 1024:
+                img = base64.b64encode(foto.getvalue()).decode()
+            else:
+                st.warning("La foto pesa más de 3 MB, se guardó el registro sin imagen.")
+        try:
+            with get_engine().begin() as con:
+                con.execute(text(
+                    "INSERT INTO registros (cultivo, diagnostico, confianza, fecha_captura, dispositivo, parcela, imagen_base64) "
+                    "VALUES (:cultivo, :dx, :conf, CAST(:fecha AS timestamp) AT TIME ZONE 'America/Mexico_City', :disp, :parcela, :img)"),
+                    {"cultivo": cultivo, "dx": diagnostico, "conf": confianza / 100,
+                     "fecha": datetime.combine(fecha, hora), "disp": dispositivo.strip() or None,
+                     "parcela": None if parcela == "Sin parcela" else parcela, "img": img})
+            cargar_datos.clear()
+            st.success("Registro guardado. Ya debe aparecer en el dashboard (se actualiza solo).")
+        except Exception as e:
+            st.error("No se pudo guardar. Revisa que la tabla registros tenga las columnas parcela y acierto "
+                     "(ejecuta el script SQL en pgAdmin).")
+            st.code(str(e))
+
+    seccion("＋", "Últimos registros de la app")
+    try:
+        ult = pd.read_sql(
+            "SELECT id, cultivo, diagnostico, confianza_pct, fecha_captura, dispositivo, parcela "
+            "FROM v_registros_dash ORDER BY fecha_captura DESC LIMIT 15", get_engine())
+        if ult.empty:
+            st.info("Todavía no hay registros.")
+        else:
+            st.dataframe(ult, hide_index=True)
+    except Exception:
+        st.info("Falta crear la vista v_registros_dash en PostgreSQL (script SQL en pgAdmin).")
+
+
 PAGINAS_FN = {
     "inicio": pagina_inicio, "r1": pagina_r1, "r2": pagina_r2, "r3": pagina_r3,
     "r4": pagina_r4, "r5": pagina_r5, "r6": pagina_r6, "decisiones": pagina_decisiones,
@@ -1110,9 +1273,10 @@ PAGINAS_FN = {
 
 # ===== CARGA Y LAYOUT =====
 try:
-    df_all = cargar_datos()
+    df_all, FUENTE, N_APP = cargar_datos()
 except FileNotFoundError as e:
-    st.error(f"No encuentro el archivo {Path(str(e.filename)).name}. Verifica que la carpeta data/ tenga los 5 CSV.")
+    st.error(f"No hay conexión a PostgreSQL y no encuentro el archivo {Path(str(e.filename)).name}. "
+             "Enciende PostgreSQL o verifica que la carpeta data/ tenga los 5 CSV.")
     st.stop()
 
 if "pagina" not in st.session_state:
@@ -1120,8 +1284,6 @@ if "pagina" not in st.session_state:
 
 def ir_a(clave):
     st.session_state.pagina = clave
-
-topbar_nativa()
 
 col_menu, col_main = st.columns([1.05, 4.85], gap="medium")
 
@@ -1132,28 +1294,47 @@ with col_menu:
             boton(etiqueta, key=f"nav_{clave}", type="primary" if st.session_state.pagina == clave else "secondary", on_click=ir_a, args=(clave,))
 
         st.markdown("<div class='filtros-t'>Filtros</div>", unsafe_allow_html=True)
-        f_anio = st.multiselect("Año", sorted(df_all["anio"].dropna().unique().tolist()), key="f_anio")
-        f_trim = st.multiselect("Trimestre", sorted(df_all["trimestre"].dropna().unique().tolist()), key="f_trim")
-        f_parc = st.multiselect("Parcela", sorted(sin_desc(df_all, "parcela")["parcela"].unique().tolist()), key="f_parc")
+        st.multiselect("Año", sorted(df_all["anio"].dropna().unique().tolist()), key="f_anio")
+        st.multiselect("Trimestre", sorted(df_all["trimestre"].dropna().unique().tolist()), key="f_trim")
+        st.multiselect("Parcela", sorted(sin_desc(df_all, "parcela")["parcela"].unique().tolist()), key="f_parc")
 
         st.markdown("<div class='logout-btn'>↩ &nbsp;Cerrar sesión</div>", unsafe_allow_html=True)
 
-df = df_all.copy()
-busqueda = st.session_state.get("busqueda_global", "").strip().lower()
-if busqueda:
-    columnas_busqueda = ["parcela", "clase_real", "clase_diag", "categoria_diag", "modelo", "algoritmo"]
-    mascara = df[columnas_busqueda].astype(str).apply(lambda col: col.str.lower().str.contains(busqueda, na=False)).any(axis=1)
-    df = df[mascara]
-
-if f_anio: df = df[df["anio"].isin(f_anio)]
-if f_trim: df = df[df["trimestre"].isin(f_trim)]
-if f_parc: df = df[df["parcela"].isin(f_parc)]
-
 titulos = {clave: titulo for clave, _, _, titulo in PAGINAS}
-with col_main:
+
+
+def aplicar_filtros(d):
+    f_anio = st.session_state.get("f_anio", [])
+    f_trim = st.session_state.get("f_trim", [])
+    f_parc = st.session_state.get("f_parc", [])
+    if f_anio: d = d[d["anio"].isin(f_anio)]
+    if f_trim: d = d[d["trimestre"].isin(f_trim)]
+    if f_parc: d = d[d["parcela"].isin(f_parc)]
+    return d
+
+
+# Esta parte se vuelve a leer de PostgreSQL y a dibujar sola cada 30 s
+@st.fragment(run_every=REFRESCO_SEGUNDOS)
+def vista_dashboard():
+    try:
+        datos, fuente, n_app = cargar_datos()
+    except Exception as e:
+        st.error(f"No pude actualizar los datos: {e}")
+        return
     encabezado(st.session_state.pagina, titulos[st.session_state.pagina])
-    if df.empty:
-        st.warning("No hay datos con los filtros o la búsqueda actuales. Prueba a quitar algún filtro.")
+    d = aplicar_filtros(datos)
+    if d.empty:
+        st.warning("No hay datos con los filtros actuales. Prueba a quitar algún filtro.")
     else:
-        PAGINAS_FN[st.session_state.pagina](df)
-    st.markdown("<div class='pie'>Fuente: PostgreSQL · db_detector_maiz · Instituto Tecnológico de Tizimín</div>", unsafe_allow_html=True)
+        PAGINAS_FN[st.session_state.pagina](d)
+    pie(fuente, n_app)
+
+
+with col_main:
+    if st.session_state.pagina == "registrar":
+        # El formulario no se refresca solo, para no borrar lo que estás escribiendo
+        encabezado("registrar", titulos["registrar"])
+        pagina_registrar(df_all, FUENTE)
+        pie(FUENTE, N_APP)
+    else:
+        vista_dashboard()
