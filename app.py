@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -65,11 +66,29 @@ MIN_VERIF = 5
 
 # ===== BASE DE DATOS (PostgreSQL) =====
 # Cambia solo estos valores (o define las variables de entorno con el mismo nombre)
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "TU_PASSWORD")   # <-- pon tu contraseña
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_NAME = os.getenv("DB_NAME", "db_detector_maiz")
+def cfg(nombre, default=""):
+    """Lee un valor de variable de entorno o de Streamlit secrets (.streamlit/secrets.toml)."""
+    v = os.getenv(nombre)
+    if v:
+        return v
+    try:
+        return str(st.secrets[nombre])
+    except Exception:
+        return default
+
+
+DB_USER = cfg("DB_USER", "postgres")
+DB_PASSWORD = cfg("DB_PASSWORD", "TU_PASSWORD")   # <-- pon tu contraseña (solo para tu PostgreSQL local)
+DB_HOST = cfg("DB_HOST", "localhost")
+DB_PORT = int(cfg("DB_PORT", "5432"))
+DB_NAME = cfg("DB_NAME", "db_detector_maiz")
+
+# ===== SUPABASE (base en la nube donde guarda la app) =====
+# Se definen en .streamlit/secrets.toml (local) o en Settings > Secrets (Streamlit Cloud)
+SUPABASE_URL = cfg("SUPABASE_URL").rstrip("/")      # https://xxxx.supabase.co
+SUPABASE_KEY = cfg("SUPABASE_KEY")                  # sb_publishable_...
+SUPABASE_TABLE = cfg("SUPABASE_TABLE", "registros")
+SUPA = bool(SUPABASE_URL and SUPABASE_KEY)
 REFRESCO_SEGUNDOS = 30     # el dashboard se actualiza solo cada 30 s
 
 # ===== Imágenes verificadas (100% del proyecto) =====
@@ -95,6 +114,55 @@ IMG_GAL_4  = "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800
 # ===== DATOS =====
 def _csv(nombre):
     return pd.read_csv(DATA_DIR / nombre, encoding="utf-8-sig")
+
+
+def _sb_headers():
+    return {"apikey": SUPABASE_KEY}
+
+
+def leer_supabase():
+    """Lee la tabla registros de Supabase (sin la imagen) por la API REST."""
+    base = f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}"
+    con_extra = "id,cultivo,diagnostico,confianza,fecha_captura,dispositivo,parcela,acierto"
+    solo_base = "id,cultivo,diagnostico,confianza,fecha_captura,dispositivo"
+    filas = []
+    for cols in (con_extra, solo_base):
+        filas, falta_col = [], False
+        for k in range(20):                       # hasta 20,000 registros
+            r = requests.get(base, headers=_sb_headers(), timeout=10, params={
+                "select": cols, "order": "fecha_captura.desc", "limit": 1000, "offset": k * 1000})
+            if r.status_code == 400 and cols == con_extra:
+                falta_col = True                  # la tabla aún no tiene parcela / acierto
+                break
+            r.raise_for_status()
+            lote = r.json()
+            filas += lote
+            if len(lote) < 1000:
+                break
+        if not falta_col:
+            break
+    df = pd.DataFrame(filas)
+    if df.empty:
+        return df
+    for c in ("parcela", "acierto"):
+        if c not in df.columns:
+            df[c] = None
+    conf = pd.to_numeric(df["confianza"], errors="coerce")
+    df["confianza_pct"] = np.where(conf <= 1, conf * 100, conf).round(1)
+    df["fecha_captura"] = (pd.to_datetime(df["fecha_captura"], utc=True, errors="coerce")
+                           .dt.tz_convert("America/Mexico_City").dt.tz_localize(None))
+    return df
+
+
+def insertar_supabase(fila):
+    """Guarda un registro en Supabase. Si la tabla no tiene la columna parcela, la omite."""
+    url = f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}"
+    h = {**_sb_headers(), "Content-Type": "application/json", "Prefer": "return=minimal"}
+    r = requests.post(url, headers=h, json=fila, timeout=15)
+    if r.status_code == 400 and "parcela" in fila:
+        r = requests.post(url, headers=h, json={k: v for k, v in fila.items() if k != "parcela"}, timeout=15)
+    if r.status_code >= 300:
+        raise RuntimeError(f"Supabase respondió {r.status_code}: {r.text}")
 
 
 @st.cache_resource
@@ -206,6 +274,13 @@ def cargar_datos():
         modelo = _csv("dim_modelo.csv")
         app = pd.DataFrame()
         fuente = "CSV local"
+
+    if SUPA:   # los escaneos de la app salen de Supabase
+        try:
+            app = leer_supabase()
+        except Exception as e:
+            app = pd.DataFrame()
+            st.warning(f"No pude leer los registros de Supabase: {e}")
 
     tiempo["fecha"] = pd.to_datetime(tiempo["fecha"], errors="coerce")
     tiempo["periodo"] = tiempo["fecha"].dt.strftime("%Y-%m")
@@ -1196,18 +1271,18 @@ def bloque_mineria():
 
 
 def pie(fuente, n_app):
-    if fuente == "PostgreSQL":
-        txt = (f"Fuente: PostgreSQL · {DB_NAME} · {fmt_int(n_app)} escaneos desde la app · "
-               f"actualizado {datetime.now():%H:%M:%S} (cada {REFRESCO_SEGUNDOS} s) · Instituto Tecnológico de Tizimín")
-    else:
-        txt = "Sin conexión a PostgreSQL: mostrando los CSV de la carpeta data/ · Instituto Tecnológico de Tizimín"
-    st.markdown(f"<div class='pie'>{txt}</div>", unsafe_allow_html=True)
+    base = "PostgreSQL" if fuente == "PostgreSQL" else "CSV local (data/)"
+    if SUPA:
+        base += " + Supabase (app)"
+    st.markdown(f"<div class='pie'>Fuente: {base} · {fmt_int(n_app)} escaneos desde la app · "
+                f"actualizado {datetime.now():%H:%M:%S} (cada {REFRESCO_SEGUNDOS} s) · Instituto Tecnológico de Tizimín</div>",
+                unsafe_allow_html=True)
 
 
 def pagina_registrar(df_all, fuente):
-    if fuente != "PostgreSQL":
-        st.warning("No hay conexión a PostgreSQL, así que no se pueden guardar registros. "
-                   "Revisa que esté encendido y que la contraseña de la sección BASE DE DATOS de app.py sea correcta.")
+    if not SUPA and fuente != "PostgreSQL":
+        st.warning("No hay conexión para guardar registros. Configura SUPABASE_URL y SUPABASE_KEY en secrets, "
+                   "o enciende tu PostgreSQL local.")
         return
 
     st.markdown("Los registros se guardan en la tabla **registros** (la misma que usa la app). "
@@ -1238,32 +1313,47 @@ def pagina_registrar(df_all, fuente):
                 img = base64.b64encode(foto.getvalue()).decode()
             else:
                 st.warning("La foto pesa más de 3 MB, se guardó el registro sin imagen.")
+        momento = datetime.combine(fecha, hora)
         try:
-            with get_engine().begin() as con:
-                con.execute(text(
-                    "INSERT INTO registros (cultivo, diagnostico, confianza, fecha_captura, dispositivo, parcela, imagen_base64) "
-                    "VALUES (:cultivo, :dx, :conf, CAST(:fecha AS timestamp) AT TIME ZONE 'America/Mexico_City', :disp, :parcela, :img)"),
-                    {"cultivo": cultivo, "dx": diagnostico, "conf": confianza / 100,
-                     "fecha": datetime.combine(fecha, hora), "disp": dispositivo.strip() or None,
-                     "parcela": None if parcela == "Sin parcela" else parcela, "img": img})
+            if SUPA:
+                fila = {"cultivo": cultivo, "diagnostico": diagnostico, "confianza": confianza / 100,
+                        "fecha_captura": pd.Timestamp(momento).tz_localize("America/Mexico_City").isoformat(),
+                        "dispositivo": dispositivo.strip() or None}
+                if parcela != "Sin parcela":
+                    fila["parcela"] = parcela
+                if img:
+                    fila["imagen_base64"] = img
+                insertar_supabase(fila)
+            else:
+                with get_engine().begin() as con:
+                    con.execute(text(
+                        "INSERT INTO registros (cultivo, diagnostico, confianza, fecha_captura, dispositivo, parcela, imagen_base64) "
+                        "VALUES (:cultivo, :dx, :conf, CAST(:fecha AS timestamp) AT TIME ZONE 'America/Mexico_City', :disp, :parcela, :img)"),
+                        {"cultivo": cultivo, "dx": diagnostico, "conf": confianza / 100, "fecha": momento,
+                         "disp": dispositivo.strip() or None,
+                         "parcela": None if parcela == "Sin parcela" else parcela, "img": img})
             cargar_datos.clear()
             st.success("Registro guardado. Ya debe aparecer en el dashboard (se actualiza solo).")
         except Exception as e:
-            st.error("No se pudo guardar. Revisa que la tabla registros tenga las columnas parcela y acierto "
-                     "(ejecuta el script SQL en pgAdmin).")
+            st.error("No se pudo guardar el registro.")
             st.code(str(e))
 
     seccion("＋", "Últimos registros de la app")
     try:
-        ult = pd.read_sql(
-            "SELECT id, cultivo, diagnostico, confianza_pct, fecha_captura, dispositivo, parcela "
-            "FROM v_registros_dash ORDER BY fecha_captura DESC LIMIT 15", get_engine())
+        if SUPA:
+            ult = leer_supabase()
+            if not ult.empty:
+                ult = ult.head(15)[["id", "cultivo", "diagnostico", "confianza_pct", "fecha_captura", "dispositivo", "parcela"]]
+        else:
+            ult = pd.read_sql(
+                "SELECT id, cultivo, diagnostico, confianza_pct, fecha_captura, dispositivo, parcela "
+                "FROM v_registros_dash ORDER BY fecha_captura DESC LIMIT 15", get_engine())
         if ult.empty:
             st.info("Todavía no hay registros.")
         else:
             st.dataframe(ult, hide_index=True)
-    except Exception:
-        st.info("Falta crear la vista v_registros_dash en PostgreSQL (script SQL en pgAdmin).")
+    except Exception as e:
+        st.info(f"No pude leer los últimos registros: {e}")
 
 
 PAGINAS_FN = {
